@@ -1,0 +1,33 @@
+import Teste.JPL.Namespace.B;
+
+namespace Teste.JPL.Namespace.A
+{
+
+    class Object
+    {
+
+    }
+
+    public class Program_Teste_Underline
+    {
+
+        public unsigned int Global_int = 0xff - 2;
+        Object Object = new Object();
+        
+        private static int Main(char[] Arg)
+        {
+
+            string Return = "Ola mundo";
+            int LocalInt = 321 + GlobalInt;
+
+            for (int i = 0; i < 123; i++)
+            {
+            }
+
+            return LocalInt;
+
+        }
+
+    }
+
+}

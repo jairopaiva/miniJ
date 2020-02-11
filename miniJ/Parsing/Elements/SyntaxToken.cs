@@ -1,8 +1,5 @@
 ﻿using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing.Elememts;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace miniJ.Parsing.Elements
 {
@@ -12,6 +9,5 @@ namespace miniJ.Parsing.Elements
         {
             this.LexerToken = lexerToken;
         }
-
     }
 }

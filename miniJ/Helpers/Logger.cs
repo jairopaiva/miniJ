@@ -8,12 +8,13 @@ namespace miniJ.Helpers
 {
     class Logger
     {
-
         private Dictionary<ICompilerNode, StringBuilder> logTable;
+
         public Logger()
         {
             logTable = new Dictionary<ICompilerNode, StringBuilder>();
         }
+
         public void Log(string message, ICompilerNode node)
         {
             logTable[node].AppendLine(message);
@@ -36,7 +37,7 @@ namespace miniJ.Helpers
         public override string ToString()
         {
             StringBuilder builder = new StringBuilder();
-            foreach(ICompilerNode node in logTable.Keys)
+            foreach (ICompilerNode node in logTable.Keys)
             {
                 builder.AppendLine("Log info of " + node.GetType());
                 builder.AppendLine(logTable[node].ToString());
@@ -44,6 +45,5 @@ namespace miniJ.Helpers
             }
             return builder.ToString();
         }
-
     }
 }

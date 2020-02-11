@@ -3,13 +3,11 @@ using miniJ.Lexical;
 using miniJ.Lexical.Elements.Token;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace miniJ.Helpers
 {
-   class Global
+    class Global
     {
-
         public static Logger Logger;
         public static Lexer Lexer;
         public static List<List<LexerToken>> lexerTokenCollection;
@@ -24,11 +22,12 @@ namespace miniJ.Helpers
 
         private static void SetUpProject()
         {
-            Project project = new Project() { Name = "SampleCodes" };
-            project.Folders = new List<Folder>()
+            string projectFolder = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\..\\"));
+            Project = new Project() { Name = "SampleCodes" };
+            Project.Folders = new List<Folder>()
             {
-                Folder.Open(Environment.CurrentDirectory+@"\SampleCodes"),
-                 Folder.Open(Environment.CurrentDirectory+@"\SampleCodes\TestPath")
+                Folder.Open(projectFolder+@"\SampleCodes"),
+                 Folder.Open(projectFolder+@"\SampleCodes\TestPath")
             };
         }
 
@@ -52,6 +51,5 @@ namespace miniJ.Helpers
                     lexerTokenCollection.Add(Lexer.Scan(folder.Path + file.Name));
             }
         }
-
     }
 }

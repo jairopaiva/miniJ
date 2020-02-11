@@ -1,6 +1,6 @@
 ﻿namespace miniJ.Lexical.Elements.Token
 {
-     class LexerToken : LexerNode
+    class LexerToken : LexerNode
     {
         public string Value { get; set; }
         public TokenType Type { get; set; }
@@ -33,6 +33,5 @@
         {
             return this.Value.GetHashCode() ^ this.Type.GetHashCode();
         }
-
     }
 }

@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace miniJ.Elements
+﻿namespace miniJ.Elements
 {
     struct ProjectTarget
     {
-       public enum Architecture
+        public enum Architecture
         {
             X86,
             X86_64,
@@ -19,6 +15,7 @@ namespace miniJ.Elements
             /// Windows
             /// </summary>
             PE,
+
             /// <summary>
             /// Linux
             /// </summary>
@@ -35,6 +32,5 @@ namespace miniJ.Elements
         public Architecture TargetArchitecture { get; set; }
         public ExecutableFormat TargetExecutableFormat { get; set; }
         public OutputType TargetOutputType { get; set; }
-
     }
 }

@@ -9,7 +9,7 @@ using System.Text;
 
 namespace miniJ.Lexical
 {
-     class Lexer : ICompilerNode
+    class Lexer : ICompilerNode
     {
         // Dicionário contendo os tokens padrões da linguagem
         public readonly Dictionary<string, LexerToken> tokenDatabase;
@@ -256,7 +256,7 @@ namespace miniJ.Lexical
             AddToken(builder.ToString(), start, ref tokens);
         }
 
-        private void AddToken(string Value, int startPos, ref List<LexerToken> tokens, TokenType tokenType=TokenType.Identifier)
+        private void AddToken(string Value, int startPos, ref List<LexerToken> tokens, TokenType tokenType = TokenType.Identifier)
         {
             TokenLocation location = new TokenLocation() { Column = startPos, Line = Reader.Line, File = CurrentFile };
             LexerToken token = new LexerToken(Value) { Location = location, Type = tokenType };
@@ -265,7 +265,7 @@ namespace miniJ.Lexical
             {
                 token.Type = tokenDatabase[Value].Type;
             }
-           
+
             Global.Logger.Log(token.ToString(), this);
             tokens.Add(token);
         }

@@ -2,7 +2,7 @@
 
 namespace miniJ.Grammar
 {
-     class Keywords
+    class Keywords
     {
         public static readonly LexerToken Break = new LexerToken("break") { Type = TokenType.Keyword };
         public static readonly LexerToken Import = new LexerToken("import") { Type = TokenType.Keyword };
@@ -42,14 +42,14 @@ namespace miniJ.Grammar
         //   public static readonly Token Onion = new Token("union"; // A Union is used for grouping different types of variable under a single name and allocates memory only of the biggest variable.
     }
 
-     class AccessModifier
+    class AccessModifier
     {
         public static readonly LexerToken Public = new LexerToken("public") { Type = TokenType.AccessModifier };
         public static readonly LexerToken Private = new LexerToken("private") { Type = TokenType.AccessModifier };
         public static readonly LexerToken Protected = new LexerToken("protected") { Type = TokenType.AccessModifier };
     }
 
-     class Delimiters
+    class Delimiters
     {
         public static readonly LexerToken OBlock = new LexerToken("{") { Type = TokenType.Delimiter };
         public static readonly LexerToken CBlock = new LexerToken("}") { Type = TokenType.Delimiter };
@@ -64,7 +64,7 @@ namespace miniJ.Grammar
         public static readonly LexerToken Backslash = new LexerToken(@"\") { Type = TokenType.Delimiter };
     }
 
-     class Comparators
+    class Comparators
     {
         public static readonly LexerToken LessThan = new LexerToken("<") { Type = TokenType.Comparator };
         public static readonly LexerToken GreaterThan = new LexerToken(">") { Type = TokenType.Comparator };
@@ -74,7 +74,7 @@ namespace miniJ.Grammar
         public static readonly LexerToken Or = new LexerToken("||") { Type = TokenType.Comparator };
     }
 
-     class Operators
+    class Operators
     {
         public static readonly LexerToken Add = new LexerToken("+") { Type = TokenType.Operator };
         public static readonly LexerToken Sub = new LexerToken("-") { Type = TokenType.Operator };
@@ -89,7 +89,7 @@ namespace miniJ.Grammar
         public static readonly LexerToken Decrement = new LexerToken("--") { Type = TokenType.Operator };
     }
 
-     class Types
+    class Types
     {
         public static readonly LexerToken Byte = new LexerToken("byte") { Type = TokenType.PrimitiveType };
         public static readonly LexerToken Char = new LexerToken("char") { Type = TokenType.PrimitiveType };
@@ -102,7 +102,7 @@ namespace miniJ.Grammar
         public static readonly LexerToken Bool = new LexerToken("bool") { Type = TokenType.PrimitiveType };
     }
 
-     class Directives
+    class Directives
     {
         public static readonly LexerToken Define = new LexerToken("#define") { Type = TokenType.Directive };
         public static readonly LexerToken UnDef = new LexerToken("#undef") { Type = TokenType.Directive };

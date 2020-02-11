@@ -5,16 +5,16 @@
         None,
         Identifier,
         Number,
-        Keyword, 
+        Keyword,
 
         // PREDEFINIDO \\
 
-        Symbol, 
-        Operator, 
-        Comparator, 
-        Delimiter, 
-        PrimitiveType, 
-        AccessModifier, 
+        Symbol,
+        Operator,
+        Comparator,
+        Delimiter,
+        PrimitiveType,
+        AccessModifier,
         Directive
 
         // PREDEFINIDO \\

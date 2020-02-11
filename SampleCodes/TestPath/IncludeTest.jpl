@@ -1,0 +1,15 @@
+
+namespace Teste.JPL.Namespace.B
+{
+
+class IncludeTest
+{
+
+    public void IncludedMethod()
+    {
+
+    }
+
+}
+
+}

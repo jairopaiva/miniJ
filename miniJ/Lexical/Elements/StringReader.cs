@@ -1,6 +1,6 @@
 ﻿namespace miniJ.Lexical.Elements
 {
-     class StringReader
+    class StringReader
     {
         private readonly string Source;
 
