@@ -11,103 +11,11 @@ namespace miniJ.Lexical
 {
     class Lexer : ICompilerNode
     {
-        // Dicionário contendo os tokens padrões da linguagem
-        public readonly Dictionary<string, LexerToken> tokenDatabase;
+        private readonly Dictionary<string, LexerToken> tokenDatabase;
 
         public Lexer()
         {
-            tokenDatabase = new Dictionary<string, LexerToken>()
-            {
-                { AccessModifier.Private.Value, AccessModifier.Private },
-                { AccessModifier.Protected.Value, AccessModifier.Protected },
-                { AccessModifier.Public.Value, AccessModifier.Public },
-
-                { Comparators.And.Value, Comparators.And },
-                { Comparators.Different.Value, Comparators.Different },
-                { Comparators.Equal.Value, Comparators.Equal },
-                { Comparators.GreaterThan.Value, Comparators.GreaterThan },
-                { Comparators.LessThan.Value, Comparators.LessThan },
-                { Comparators.Or.Value, Comparators.Or },
-
-                { Delimiters.CBlock.Value, Delimiters.CBlock },
-                { Delimiters.CIndex.Value, Delimiters.CIndex },
-                { Delimiters.CInstruction.Value, Delimiters.CInstruction },
-                { Delimiters.Collon.Value, Delimiters.Collon },
-                { Delimiters.Comma.Value, Delimiters.Comma },
-                { Delimiters.CParenthesis.Value, Delimiters.CParenthesis },
-                { Delimiters.Dot.Value, Delimiters.Dot },
-                { Delimiters.OBlock.Value, Delimiters.OBlock },
-                { Delimiters.OIndex.Value, Delimiters.OIndex },
-                { Delimiters.OParenthesis.Value, Delimiters.OParenthesis },
-                { Delimiters.Backslash.Value, Delimiters.Backslash },
-
-                { Directives.Define.Value, Directives.Define },
-                { Directives.ElseIf.Value, Directives.ElseIf },
-                { Directives.EndIf.Value, Directives.EndIf },
-                { Directives.If.Value, Directives.If },
-                { Directives.IfDefined.Value, Directives.IfDefined },
-                { Directives.IfNotDefine.Value, Directives.IfNotDefine },
-                { Directives.Include.Value, Directives.Include },
-                { Directives.ThrowError.Value, Directives.ThrowError },
-                { Directives.UnDef.Value, Directives.UnDef },
-
-                { Keywords.Asm.Value, Keywords.Asm },
-                { Keywords.Auto.Value, Keywords.Auto },
-                { Keywords.Base.Value, Keywords.Base },
-                { Keywords.Break.Value, Keywords.Break },
-                { Keywords.Case.Value, Keywords.Case },
-                { Keywords.Catch.Value, Keywords.Catch },
-                { Keywords.Class.Value, Keywords.Class },
-                { Keywords.Constant.Value, Keywords.Constant },
-                { Keywords.Continue.Value, Keywords.Continue },
-                { Keywords.Default.Value, Keywords.Default },
-                { Keywords.Do.Value, Keywords.Do },
-                { Keywords.Else.Value, Keywords.Else },
-                { Keywords.Enum.Value, Keywords.Enum },
-                { Keywords.Extern.Value, Keywords.Extern },
-                { Keywords.False.Value, Keywords.False },
-                { Keywords.For.Value, Keywords.For },
-                { Keywords.If.Value, Keywords.If },
-                { Keywords.Import.Value, Keywords.Import },
-                { Keywords.Interface.Value, Keywords.Interface},
-                { Keywords.Namespace.Value, Keywords.Namespace },
-                { Keywords.New.Value, Keywords.New },
-                { Keywords.Null.Value, Keywords.Null },
-                { Keywords.Readonly.Value, Keywords.Readonly },
-                { Keywords.Return.Value, Keywords.Return },
-                { Keywords.Signed.Value, Keywords.Signed },
-                { Keywords.SizeOf.Value, Keywords.SizeOf },
-                { Keywords.Struct.Value, Keywords.Struct },
-                { Keywords.Switch.Value, Keywords.Switch},
-                { Keywords.This.Value, Keywords.This },
-                { Keywords.True.Value, Keywords.True },
-                { Keywords.Try.Value, Keywords.Try },
-                { Keywords.Unsigned.Value, Keywords.Unsigned },
-                { Keywords.Volatile.Value, Keywords.Volatile },
-                { Keywords.While.Value, Keywords.While  },
-
-                { Types.Bool.Value, Types.Bool },
-                { Types.Byte.Value, Types.Byte },
-                { Types.Char.Value, Types.Char },
-                { Types.Double.Value, Types.Double },
-                { Types.Float.Value, Types.Float },
-                { Types.Int.Value, Types.Int },
-                { Types.Long.Value, Types.Long },
-                { Types.String.Value, Types.String },
-                { Types.Void.Value, Types.Void },
-
-                { Operators.Add.Value, Operators.Add },
-                { Operators.AddAssign.Value, Operators.AddAssign },
-                { Operators.And.Value, Operators.And },
-                { Operators.Decrement.Value, Operators.Decrement },
-                { Operators.Division.Value, Operators.Division },
-                { Operators.Equal.Value, Operators.Equal },
-                { Operators.Increment.Value, Operators.Increment },
-                { Operators.Or.Value, Operators.Or },
-                { Operators.Power.Value, Operators.Power },
-                { Operators.Sub.Value, Operators.Sub },
-                { Operators.SubAssign.Value, Operators.SubAssign }
-            };
+            tokenDatabase = Global.tokenDatabase;
         }
 
         // Para cada arquivo processado, estas variáveis são 'resetadas'
@@ -129,8 +37,8 @@ namespace miniJ.Lexical
 
                 if (LexerUtils.IsNewLine(curChar))
                 {
-                    Reader.Read();
                     Reader.NewLine();
+                    Reader.Read();
                 }
                 else if (char.IsWhiteSpace(curChar))
                 {
@@ -144,15 +52,27 @@ namespace miniJ.Lexical
                 {
                     ParseNumber(ref Tokens);
                 }
-                else if (curChar == LexerUtils.DIRECTIVE_SIGNAL)
+                else if (curChar == Directives.Define.Value[0])
                 {
                     ParseDirective(ref Tokens);
+                }
+                else if (LexerUtils.IsOperatorOrComparator(curChar.ToString()))
+                {
+                    ParseSymbolOrOperator(ref Tokens);
+                }
+                else if (curChar == Delimiters.CharAssigment.Value[0])
+                {
+                    ParseCharAssigment(ref Tokens);
+                }
+                else if (curChar == Delimiters.StringAssigment.Value[0])
+                {
+                    ParseStringAssigment(ref Tokens);
                 }
                 else
                     try
                     {
-                        Reader.Read();
                         AddToken(curChar.ToString(), Reader.Column, ref Tokens);
+                        Reader.Read();
                     }
                     catch (Exception)
                     {
@@ -165,22 +85,27 @@ namespace miniJ.Lexical
 
         private void ParseDirective(ref List<LexerToken> tokens)
         {
+            char curChar = (char)Reader.Read();
+
             int start = Reader.Column;
             StringBuilder builder = new StringBuilder();
-            builder.Append((char)Reader.Peek()); // Escreve o símbolo '#' para que a função AddToken saiba de que se trata de um Token do tipo Directive
+            builder.Append(curChar); // Escreve o símbolo '#' para que a função AddToken saiba de que se trata de um Token do tipo Directive
 
-            Reader.Read();
-
-            char curChar = (char)Reader.Peek();
+            curChar = (char)Reader.Peek();
 
             while (char.IsLetter(curChar))
             {
                 builder.Append(curChar);
                 Reader.Read();
+
                 if (Reader.Peek() != -1)
-                { curChar = (char)Reader.Peek(); }
+                {
+                    curChar = (char)Reader.Peek();
+                }
                 else
-                { break; }
+                {
+                    break;
+                }
             }
 
             AddToken(builder.ToString(), start, ref tokens);
@@ -189,7 +114,8 @@ namespace miniJ.Lexical
         private void ParseNumber(ref List<LexerToken> tokens)
         {
             int start = Reader.Column;
-            char curChar = (char)Reader.Peek();
+            char curChar = (char)Reader.Peek(); ;
+
             Reader.Read();
 
             StringBuilder builder = new StringBuilder();
@@ -201,8 +127,11 @@ namespace miniJ.Lexical
                 {
                     builder.Append(curChar);
                     Reader.Read();
+
                     if (Reader.Peek() != -1)
-                    { curChar = (char)Reader.Peek(); }
+                    {
+                        curChar = (char)Reader.Peek();
+                    }
                     else
                     {
                         break;
@@ -215,18 +144,21 @@ namespace miniJ.Lexical
             else
             {
                 bool dotDetected = false;
-                while (char.IsDigit(curChar) || curChar == LexerUtils.DOT)
+                while (char.IsDigit(curChar) || curChar == Delimiters.Dot.Value[0])
                 {
                     builder.Append(curChar);
                     Reader.Read();
+
                     if (Reader.Peek() != -1)
-                    { curChar = (char)Reader.Peek(); }
+                    {
+                        curChar = (char)Reader.Peek();
+                    }
                     else
                     {
                         break;
                     }
 
-                    if (curChar == LexerUtils.DOT && dotDetected)
+                    if (curChar == Delimiters.Dot.Value[0] && dotDetected)
                         throw new Exception();
                     else
                         dotDetected = true;
@@ -247,23 +179,114 @@ namespace miniJ.Lexical
             {
                 builder.Append(curChar);
                 Reader.Read();
+
                 if (Reader.Peek() != -1)
-                { curChar = (char)Reader.Peek(); }
+                {
+                    curChar = (char)Reader.Peek();
+                }
                 else
-                { break; }
+                {
+                    break;
+                }
             }
 
             AddToken(builder.ToString(), start, ref tokens);
         }
 
-        private void AddToken(string Value, int startPos, ref List<LexerToken> tokens, TokenType tokenType = TokenType.Identifier)
+        private void ParseSymbolOrOperator(ref List<LexerToken> tokens)
+        {
+            string curChar = ((char)Reader.Peek()).ToString();
+            StringBuilder builder = new StringBuilder();
+
+            int start = Reader.Column;
+
+            while (LexerUtils.IsOperatorOrComparator(curChar))
+            {
+                builder.Append(curChar);
+                Reader.Read();
+
+                if (Reader.Peek() != -1)
+                {
+                    curChar = ((char)Reader.Peek()).ToString();
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            AddToken(builder.ToString(), start, ref tokens);
+        }
+
+        private void ParseStringAssigment(ref List<LexerToken> tokens)
+        {
+            int start = Reader.Column;
+            Reader.Read();
+            char curChar = (char)Reader.Peek();
+            StringBuilder builder = new StringBuilder();
+
+            while (curChar != Delimiters.StringAssigment.Value[0])
+            {
+                builder.Append(curChar);
+                Reader.Read();
+
+                if (Reader.Peek() != -1)
+                {
+                    curChar = (char)Reader.Peek();
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            Reader.Read();
+
+            AddToken(builder.ToString(), start, ref tokens, TokenType.String);
+        }
+
+        private void ParseCharAssigment(ref List<LexerToken> tokens)
+        {
+            int start = Reader.Column;
+            Reader.Read();
+            char curChar = (char)Reader.Peek();
+            StringBuilder builder = new StringBuilder();
+
+            while (curChar != Delimiters.CharAssigment.Value[0])
+            {
+                builder.Append(curChar);
+                Reader.Read();
+
+                if (Reader.Peek() != -1)
+                {
+                    curChar = (char)Reader.Peek();
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            Reader.Read();
+
+            AddToken(builder.ToString(), start, ref tokens, TokenType.Char);
+        }
+
+        private void AddToken(string Value, int startPos, ref List<LexerToken> tokens, TokenType tokenType = TokenType.None)
         {
             TokenLocation location = new TokenLocation() { Column = startPos, Line = Reader.Line, File = CurrentFile };
-            LexerToken token = new LexerToken(Value) { Location = location, Type = tokenType };
+            LexerToken token = new LexerToken(Value) { Location = location, Type = tokenType }; ;
 
             if (tokenDatabase.ContainsKey(Value))
             {
                 token.Type = tokenDatabase[Value].Type;
+            }
+            else
+            {
+                if (token.Type == TokenType.None)
+                {
+                    token.Type = TokenType.Identifier;
+                }
             }
 
             Global.Logger.Log(token.ToString(), this);

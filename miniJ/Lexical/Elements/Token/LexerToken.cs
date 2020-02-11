@@ -26,7 +26,7 @@
 
         public override string ToString()
         {
-            return "Token[" + this.Location.Line + ":" + this.Location.Column + "] = " + this.Value + " : " + this.Type;
+            return this.Location.File + " :: Token[" + this.Location.Line + ":" + this.Location.Column + "] = " + this.Value + " : " + this.Type;
         }
 
         public override int GetHashCode()

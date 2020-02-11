@@ -2,14 +2,19 @@
 namespace Teste.JPL.Namespace.B
 {
 
-class IncludeTest
-{
+	class IncludeTest
+	{
 
-    public void IncludedMethod()
-    {
+		public void IncludedMethod()
+		{
+			string testString = "Ola mundo";
+			char testChar = 'a';
+			int test = 1;
+			test++;
+			test+=123;
+			bool greateThanEqual = test >= 1;
+		}
 
-    }
-
-}
+	}
 
 }

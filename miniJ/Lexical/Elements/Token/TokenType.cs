@@ -5,9 +5,11 @@
         None,
         Identifier,
         Number,
-        Keyword,
+        String,
+        Char,
 
         // PREDEFINIDO \\
+        Keyword,
 
         Symbol,
         Operator,

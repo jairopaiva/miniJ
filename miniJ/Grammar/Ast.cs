@@ -62,12 +62,16 @@ namespace miniJ.Grammar
         public static readonly LexerToken CInstruction = new LexerToken(";") { Type = TokenType.Delimiter };
         public static readonly LexerToken Collon = new LexerToken(":") { Type = TokenType.Delimiter };
         public static readonly LexerToken Backslash = new LexerToken(@"\") { Type = TokenType.Delimiter };
+        public static readonly LexerToken CharAssigment = new LexerToken("'") { Type = TokenType.Delimiter };
+        public static readonly LexerToken StringAssigment = new LexerToken('"'.ToString()) { Type = TokenType.Delimiter };
     }
 
     class Comparators
     {
         public static readonly LexerToken LessThan = new LexerToken("<") { Type = TokenType.Comparator };
         public static readonly LexerToken GreaterThan = new LexerToken(">") { Type = TokenType.Comparator };
+        public static readonly LexerToken LessThanOrEqual = new LexerToken("<=") { Type = TokenType.Comparator };
+        public static readonly LexerToken GreaterThanOrEqual = new LexerToken(">=") { Type = TokenType.Comparator };
         public static readonly LexerToken Different = new LexerToken("!=") { Type = TokenType.Comparator };
         public static readonly LexerToken Equal = new LexerToken("==") { Type = TokenType.Comparator };
         public static readonly LexerToken And = new LexerToken("&&") { Type = TokenType.Comparator };
