@@ -9,6 +9,10 @@ namespace miniJ.Elements
         public List<Folder> Folders { get; set; }
         public string Name { get; set; }
         public ProjectTarget ProjectTarget { get; set; }
+
+        public Project()
+        {
+        }
     }
 
     class File

@@ -1,0 +1,9 @@
+namespace jairo.paiva.Tey // Comentario namespace
+{
+    public class SyntaxTests
+    {
+		public int[] arrayDeInt = new int[]{0xff, 0x00000, 0x123, -123};
+		public float testFloat = 1.232151;
+	}
+}
+ // Comentario EOF

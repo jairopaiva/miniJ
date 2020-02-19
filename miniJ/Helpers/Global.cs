@@ -11,16 +11,24 @@ namespace miniJ.Helpers
     {
         public static Logger Logger;
         public static Lexer Lexer;
-        public static List<List<LexerToken>> lexerTokenCollection;
-        public static Dictionary<string, LexerToken> tokenDatabase;   // Dicionário contendo os tokens padrões da linguagem
+        public static List<Token> lexerTokenCollection;
+        public static Dictionary<string, Token> tokenDatabase;   // Dicionário contendo os tokens padrões da linguagem
         public static Project Project;
+        public static Namespace GlobalNamespace;
 
         public static void Reset()
         {
+            SetUpGlobalNamespace();
             SetUpTokenDatabase();
             SetUpProject();
             SetUpLexer();
             SetUpLogger();
+        }
+
+        private static void SetUpGlobalNamespace()
+        {
+            GlobalNamespace = new Namespace(null, null);
+            GlobalNamespace.Name = "global";
         }
 
         private static void SetUpProject()
@@ -29,8 +37,8 @@ namespace miniJ.Helpers
             Project = new Project() { Name = "SampleCodes" };
             Project.Folders = new List<Folder>()
             {
-                Folder.Open(projectFolder+@"\SampleCodes"),
-                 Folder.Open(projectFolder+@"\SampleCodes\TestPath")
+                Folder.Open(projectFolder+@"\SampleCodes")//,
+                // Folder.Open(projectFolder+@"\SampleCodes\TestPath")
             };
         }
 
@@ -42,7 +50,7 @@ namespace miniJ.Helpers
 
         private static void SetUpLexer()
         {
-            lexerTokenCollection = new List<List<LexerToken>>();
+            lexerTokenCollection = new List<Token>();
             Lexer = new Lexer();
         }
 
@@ -51,13 +59,15 @@ namespace miniJ.Helpers
             foreach (Folder folder in Project.Folders)
             {
                 foreach (File file in folder.Files)
-                    lexerTokenCollection.Add(Lexer.Scan(folder.Path + file.Name));
+                    lexerTokenCollection.AddRange(Lexer.Scan(folder.Path + file.Name));
             }
+            lexerTokenCollection.Add(
+                Delimiters.EOF.Copy(lexerTokenCollection[lexerTokenCollection.Count - 1].Location));
         }
 
         private static void SetUpTokenDatabase()
         {
-            tokenDatabase = new Dictionary<string, LexerToken>()
+            tokenDatabase = new Dictionary<string, Token>()
             {
                 { AccessModifier.Private.Value, AccessModifier.Private },
                 { AccessModifier.Protected.Value, AccessModifier.Protected },
@@ -83,6 +93,7 @@ namespace miniJ.Helpers
                 { Delimiters.OIndex.Value, Delimiters.OIndex },
                 { Delimiters.OParenthesis.Value, Delimiters.OParenthesis },
                 { Delimiters.Backslash.Value, Delimiters.Backslash },
+                { Delimiters.TwoCollon.Value, Delimiters.TwoCollon },
 
                 { Directives.Define.Value, Directives.Define },
                 { Directives.ElseIf.Value, Directives.ElseIf },

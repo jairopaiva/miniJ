@@ -1,6 +1,5 @@
 ﻿using miniJ.Grammar;
 using miniJ.Helpers;
-using miniJ.Lexical.Elements.Token;
 
 namespace miniJ.Lexical
 {
@@ -24,9 +23,10 @@ namespace miniJ.Lexical
 
         public static bool IsOperatorOrComparator(string curChar)
         {
-            return (Global.tokenDatabase.ContainsKey(curChar) &&
-                (Global.tokenDatabase[curChar].Type == TokenType.Comparator ||
-                Global.tokenDatabase[curChar].Type == TokenType.Operator));
+            if (Global.tokenDatabase.ContainsKey(curChar))
+                return Global.tokenDatabase[curChar].TokenType.ToString().StartsWith("Operator") ||
+                        Global.tokenDatabase[curChar].TokenType.ToString().StartsWith("Comparator");
+            return false;
         }
 
         public static bool IsNewLine(char c)

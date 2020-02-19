@@ -11,7 +11,7 @@ namespace miniJ.Lexical
 {
     class Lexer : ICompilerNode
     {
-        private readonly Dictionary<string, LexerToken> tokenDatabase;
+        private readonly Dictionary<string, Token> tokenDatabase;
 
         public Lexer()
         {
@@ -24,11 +24,11 @@ namespace miniJ.Lexical
         public string CurrentSourceCode { get; set; }
         public StringReader Reader { get; set; }
 
-        public List<LexerToken> Scan(string filePath)
+        public List<Token> Scan(string filePath)
         {
             CurrentSourceCode = System.IO.File.ReadAllText(filePath);
             Reader = new StringReader(CurrentSourceCode);
-            List<LexerToken> Tokens = new List<LexerToken>();
+            List<Token> Tokens = new List<Token>();
             CurrentFile = filePath;
 
             while (Reader.Peek() != -1)
@@ -83,7 +83,7 @@ namespace miniJ.Lexical
             return Tokens;
         }
 
-        private void ParseDirective(ref List<LexerToken> tokens)
+        private void ParseDirective(ref List<Token> tokens)
         {
             char curChar = (char)Reader.Read();
 
@@ -111,18 +111,23 @@ namespace miniJ.Lexical
             AddToken(builder.ToString(), start, ref tokens);
         }
 
-        private void ParseNumber(ref List<LexerToken> tokens)
+        private void ParseNumber(ref List<Token> tokens)
         {
             int start = Reader.Column;
-            char curChar = (char)Reader.Peek(); ;
-
-            Reader.Read();
+            char curChar = (char)Reader.Peek();
 
             StringBuilder builder = new StringBuilder();
-            bool hexNumber = curChar == LexerUtils.HEX_SIGNAL[0] && (char)Reader.Peek() == LexerUtils.HEX_SIGNAL[1];
+
+            Reader.Reset();
+            Reader.Next();
+
+            bool hexNumber = curChar == LexerUtils.HEX_SIGNAL[0] && (char)Reader.PeekTemp() == LexerUtils.HEX_SIGNAL[1];
 
             if (hexNumber)
             {
+                Reader.Read();
+                Reader.Read();
+                curChar = (char)Reader.Peek();
                 while (LexerUtils.HexChar(curChar))
                 {
                     builder.Append(curChar);
@@ -165,17 +170,17 @@ namespace miniJ.Lexical
                 }
             }
 
-            AddToken(builder.ToString(), start, ref tokens, TokenType.Number);
+            AddToken(builder.ToString(), start, ref tokens, TokenType.NotDef_Number);
         }
 
-        private void ParseLetter(ref List<LexerToken> tokens)
+        private void ParseLetter(ref List<Token> tokens)
         {
             char curChar = (char)Reader.Peek();
             StringBuilder builder = new StringBuilder();
 
             int start = Reader.Column;
 
-            while (char.IsLetter(curChar) || curChar == LexerUtils.UNDERLINE)
+            while (char.IsLetterOrDigit(curChar) || curChar == LexerUtils.UNDERLINE)
             {
                 builder.Append(curChar);
                 Reader.Read();
@@ -193,9 +198,21 @@ namespace miniJ.Lexical
             AddToken(builder.ToString(), start, ref tokens);
         }
 
-        private void ParseSymbolOrOperator(ref List<LexerToken> tokens)
+        private void ParseSymbolOrOperator(ref List<Token> tokens)
         {
             string curChar = ((char)Reader.Peek()).ToString();
+            Reader.Reset(); Reader.Next();
+            if (curChar == Operators.Division.Value &&
+                ((char)Reader.PeekTemp()).ToString() == Operators.Division.Value) // Se trata de um comentário
+            {
+                while (!LexerUtils.IsNewLine((char)Reader.Peek()))
+                {
+                    if (Reader.Read() == -1)
+                        break;
+                }
+                return;
+            }
+
             StringBuilder builder = new StringBuilder();
 
             int start = Reader.Column;
@@ -218,7 +235,7 @@ namespace miniJ.Lexical
             AddToken(builder.ToString(), start, ref tokens);
         }
 
-        private void ParseStringAssigment(ref List<LexerToken> tokens)
+        private void ParseStringAssigment(ref List<Token> tokens)
         {
             int start = Reader.Column;
             Reader.Read();
@@ -242,10 +259,10 @@ namespace miniJ.Lexical
 
             Reader.Read();
 
-            AddToken(builder.ToString(), start, ref tokens, TokenType.String);
+            AddToken(builder.ToString(), start, ref tokens, TokenType.NotDef_String);
         }
 
-        private void ParseCharAssigment(ref List<LexerToken> tokens)
+        private void ParseCharAssigment(ref List<Token> tokens)
         {
             int start = Reader.Column;
             Reader.Read();
@@ -269,23 +286,23 @@ namespace miniJ.Lexical
 
             Reader.Read();
 
-            AddToken(builder.ToString(), start, ref tokens, TokenType.Char);
+            AddToken(builder.ToString(), start, ref tokens, TokenType.NotDef_Char);
         }
 
-        private void AddToken(string Value, int startPos, ref List<LexerToken> tokens, TokenType tokenType = TokenType.None)
+        private void AddToken(string Value, int startPos, ref List<Token> tokens, TokenType specificTokenType = TokenType.NotDef_None)
         {
-            TokenLocation location = new TokenLocation() { Column = startPos, Line = Reader.Line, File = CurrentFile };
-            LexerToken token = new LexerToken(Value) { Location = location, Type = tokenType }; ;
+            NodeLocation location = new NodeLocation() { Column = startPos, Line = Reader.Line, File = CurrentFile };
+            Token token = new Token(Value) { Location = location, TokenType = specificTokenType }; ;
 
             if (tokenDatabase.ContainsKey(Value))
             {
-                token.Type = tokenDatabase[Value].Type;
+                token.TokenType = tokenDatabase[Value].TokenType;
             }
             else
             {
-                if (token.Type == TokenType.None)
+                if (token.TokenType == TokenType.NotDef_None)
                 {
-                    token.Type = TokenType.Identifier;
+                    token.TokenType = TokenType.NotDef_Identifier;
                 }
             }
 

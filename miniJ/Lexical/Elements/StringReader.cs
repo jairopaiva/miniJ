@@ -18,13 +18,9 @@
             Column = 1;
         }
 
-        /// <summary>
-        /// O próximo caractere é retornado sem alterar a posição atual, caso seja o último da
-        /// lista, o -1 é retornado.
-        /// </summary>
         public int Peek()
         {
-            if (Position == Source.Length)
+            if (Position >= Source.Length)
                 return -1;
             return (int)Source[Position];
         }
@@ -35,20 +31,14 @@
             Column = 0;
         }
 
-        /// <summary>
-        /// O próximo caractere é retornado caso seja o último da, lista, o -1 é retornado.
-        /// </summary>
         public int Read()
         {
-            if (Position == Source.Length)
+            if (Position >= Source.Length)
                 return -1;
             Column++;
             return (int)Source[Position++];
         }
 
-        /// <summary>
-        /// Retorna o caractere armazenado no index passado
-        /// </summary>
         public int this[int Index]
         {
             get
@@ -71,6 +61,14 @@
         public int Next()
         {
             return (int)Source[tempPos++];
+        }
+
+        /// <summary>
+        /// Retorna o caractere a posição temporária
+        /// </summary>
+        public int PeekTemp()
+        {
+            return (int)Source[tempPos];
         }
 
         /// <summary>

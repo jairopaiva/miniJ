@@ -1,0 +1,46 @@
+namespace TestingNamespace.ClassTesting
+{
+
+    class TestingClass
+    {
+
+        public TestingClass()
+        {
+            int te = 2;
+        }
+
+        public int Number;
+
+        public void TestingMethod(int a, int b)
+        {
+
+            bool equal = a == b; // Testing comment
+	    int sum = a + b + 0x666;
+
+            for (int i = 0; i < 5; i++)
+            {
+                sum *= i;
+            }
+
+            return sum;
+        }
+
+    }
+
+    class TestingSyntax
+    {
+        public TestingSyntax()
+        {
+            TestingClass testignClass = new TestingClass();
+            int result = testignClass.TestingMethod(666, 777);
+            result++;
+
+            int[] arraytesting = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+            int[] arraytesting2 = new int[10];
+
+            arraytesting2[2] = arraytesting[2];
+            arraytesting2[3] = testignClass.TestingMethod(rraytesting2[0], rraytesting2[1]);
+        }
+    }
+
+}
