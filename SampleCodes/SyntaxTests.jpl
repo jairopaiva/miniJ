@@ -3,7 +3,23 @@ namespace jairo.paiva.Tey // Comentario namespace
     public class SyntaxTests
     {
 		public int[] arrayDeInt = new int[]{0xff, 0x00000, 0x123, -123};
-		public float testFloat = 1.232151;
+		public float[] testFloat = new float[] {1.232151, 123.321};
+		public byte[] notInitialized;
+		
+		public void Tet_Undeline(int[] arg){
+			
+			char newLine = '\n';
+			
+			if(arg[0] == 0 && arg[1] >= 1){
+				for(int i = 0; i != arg[1]; i++){
+					arg[1]+=i; // Comentario dentro de loop for
+				}
+			}
+			
+			bool boolTest = arg[0] >= 1;
+			if(!boolTest)
+				arg[0]=0x01;
+		}
 	}
 }
  // Comentario EOF

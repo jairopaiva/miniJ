@@ -2,6 +2,7 @@
 using miniJ.Grammar;
 using miniJ.Lexical;
 using miniJ.Lexical.Elements.Token;
+using miniJ.Parsing;
 using System;
 using System.Collections.Generic;
 
@@ -11,6 +12,7 @@ namespace miniJ.Helpers
     {
         public static Logger Logger;
         public static Lexer Lexer;
+        public static PreProcessor PreProcessor;
         public static List<Token> lexerTokenCollection;
         public static Dictionary<string, Token> tokenDatabase;   // Dicionário contendo os tokens padrões da linguagem
         public static Project Project;
@@ -23,6 +25,14 @@ namespace miniJ.Helpers
             SetUpProject();
             SetUpLexer();
             SetUpLogger();
+            SetUpPreProcessor();
+        }
+
+        public static void Compile()
+        {
+            LexicalProcess();
+          //  Logger.AppendToFile();
+            PreProcessor.Process();
         }
 
         private static void SetUpGlobalNamespace()
@@ -54,6 +64,11 @@ namespace miniJ.Helpers
             Lexer = new Lexer();
         }
 
+        private static void SetUpPreProcessor()
+        {
+            PreProcessor = new PreProcessor();
+        }
+
         public static void LexicalProcess()
         {
             foreach (Folder folder in Project.Folders)
@@ -75,6 +90,7 @@ namespace miniJ.Helpers
 
                 { Comparators.And.Value, Comparators.And },
                 { Comparators.Different.Value, Comparators.Different },
+                { Comparators.Inequality.Value, Comparators.Inequality },
                 { Comparators.Equal.Value, Comparators.Equal },
                 { Comparators.GreaterThan.Value, Comparators.GreaterThan },
                 { Comparators.LessThan.Value, Comparators.LessThan },

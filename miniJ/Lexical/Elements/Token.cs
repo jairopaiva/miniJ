@@ -25,9 +25,12 @@
             return obj.ToString() == this.Value;
         }
 
-        public override string ToString()
+        public string ToString(bool location= false)
         {
-            return this.Location.File + " :: Token[" + this.Location.Line + ":" + this.Location.Column + "] = " + this.TokenType + " - Value = " + this.Value;
+            string info = "Token[" + this.Location.Line + ":" + this.Location.Column + "] = " + this.TokenType + " - Value = " + this.Value;
+            if (location)
+                info = this.Location.File + " :: " + info;
+            return info;
         }
 
         public override int GetHashCode()

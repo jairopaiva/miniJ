@@ -163,10 +163,13 @@ namespace miniJ.Lexical
                         break;
                     }
 
-                    if (curChar == Delimiters.Dot.Value[0] && dotDetected)
-                        throw new Exception();
-                    else
-                        dotDetected = true;
+                    if (curChar == Delimiters.Dot.Value[0])
+                        if (dotDetected)
+                        {
+                            throw new Exception();
+                        }
+                        else
+                            dotDetected = true;
                 }
             }
 
@@ -306,7 +309,7 @@ namespace miniJ.Lexical
                 }
             }
 
-            Global.Logger.Log(token.ToString(), this);
+          //  Global.Logger.Log(token.ToString(), this);
             tokens.Add(token);
         }
     }

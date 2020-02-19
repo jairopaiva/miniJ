@@ -13,6 +13,7 @@ namespace miniJ.Grammar
     {
         public static readonly Token And = new Token("&&") { TokenType = TokenType.Comparator_And };
         public static readonly Token Different = new Token("!=") { TokenType = TokenType.Comparator_Different };
+        public static readonly Token Inequality = new Token("!") { TokenType = TokenType.Comparator_Inequality };
         public static readonly Token Equal = new Token("==") { TokenType = TokenType.Comparator_Equal };
         public static readonly Token GreaterThan = new Token(">") { TokenType = TokenType.Comparator_GreaterThan };
         public static readonly Token GreaterThanOrEqual = new Token(">=") { TokenType = TokenType.Comparator_GreaterThanOrEqual };

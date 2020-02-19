@@ -6,7 +6,7 @@ namespace miniJ.Elements
 {
     class Namespace : ISyntaxNode
     {
-        public List<Namespace> Path { get; set; }
+        public List<Namespace> Childs { get; set; }
         public Dictionary<string, CISE> CISEs { get; set; }
         public List<Namespace> Imports { get; set; }
         public readonly Namespace Parent;
@@ -14,7 +14,7 @@ namespace miniJ.Elements
 
         public Namespace(Token origin, Namespace parent) : base(origin)
         {
-            Path = new List<Namespace>();
+            Childs = new List<Namespace>();
             CISEs = new Dictionary<string, CISE>();
             Imports = new List<Namespace>();
             Parent = parent;

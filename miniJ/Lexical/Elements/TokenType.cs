@@ -68,6 +68,7 @@
         Comparator_LessThan,
         Comparator_LessThanOrEqual,
         Comparator_GreaterThanOrEqual,
+        Comparator_Inequality,
         Comparator_Different,
         Comparator_Equal,
         Comparator_And,

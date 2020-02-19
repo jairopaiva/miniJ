@@ -10,9 +10,7 @@ namespace miniJ
             DateTime startTime = DateTime.Now;
 
             Global.Reset();
-            Global.LexicalProcess();
-
-            Global.Logger.AppendToFile();
+            Global.Compile();
 
             Console.WriteLine("Finished in " + DateTime.Now.Subtract(startTime));
 
