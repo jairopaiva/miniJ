@@ -5,10 +5,11 @@ namespace miniJ.Elements
 {
     class CISE : ISyntaxNode
     {
-        public string Name { get; set; }
-        public CISEType Type { get; set; }
-
-        public Namespace RefNamespace { get; set; }
+        public CISE(string name, CISEType type, Token origin) : base(origin)
+        {
+            Name = name;
+            Type = type;
+        }
 
         public enum CISEType
         {
@@ -18,10 +19,8 @@ namespace miniJ.Elements
             Enum
         }
 
-        public CISE(string name, CISEType type, Token origin) : base(origin)
-        {
-            Name = name;
-            Type = type;
-        }
+        public string Name { get; set; }
+        public Namespace RefNamespace { get; set; }
+        public CISEType Type { get; set; }
     }
 }

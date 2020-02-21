@@ -9,6 +9,11 @@ using System.Text;
 
 namespace miniJ.Lexical
 {
+    /// <summary> https://pt.wikipedia.org/wiki/An%C3%A1lise_l%C3%A9xica
+    /// Análise léxica é o processo de analisar a entrada de linhas de caracteres (tal como o código-fonte de um programa
+    /// de computador) e produzir uma sequência de símbolos chamado "símbolos léxicos" (lexical tokens), ou somente
+    /// "símbolos" (tokens), que podem ser manipulados mais facilmente por um parser (leitor de saída).
+    /// </summary>
     class Lexer : ICompilerNode
     {
         private readonly Dictionary<string, Token> tokenDatabase;
@@ -83,6 +88,54 @@ namespace miniJ.Lexical
             return Tokens;
         }
 
+        private void AddToken(string Value, int startPos, ref List<Token> tokens, TokenType specificTokenType = TokenType.NotDef_None)
+        {
+            NodeLocation location = new NodeLocation() { Column = startPos, Line = Reader.Line, File = CurrentFile };
+            Token token = new Token(Value) { Location = location, TokenType = specificTokenType }; ;
+
+            if (tokenDatabase.ContainsKey(Value))
+            {
+                token.TokenType = tokenDatabase[Value].TokenType;
+            }
+            else
+            {
+                if (token.TokenType == TokenType.NotDef_None)
+                {
+                    token.TokenType = TokenType.NotDef_Identifier;
+                }
+            }
+
+            //  Global.Logger.Log(token.ToString(), this);
+            tokens.Add(token);
+        }
+
+        private void ParseCharAssigment(ref List<Token> tokens)
+        {
+            int start = Reader.Column;
+            Reader.Read();
+            char curChar = (char)Reader.Peek();
+            StringBuilder builder = new StringBuilder();
+
+            while (curChar != Delimiters.CharAssigment.Value[0])
+            {
+                builder.Append(curChar);
+                Reader.Read();
+
+                if (Reader.Peek() != -1)
+                {
+                    curChar = (char)Reader.Peek();
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            Reader.Read();
+
+            AddToken(builder.ToString(), start, ref tokens, TokenType.NotDef_Char);
+        }
+
         private void ParseDirective(ref List<Token> tokens)
         {
             char curChar = (char)Reader.Read();
@@ -94,6 +147,31 @@ namespace miniJ.Lexical
             curChar = (char)Reader.Peek();
 
             while (char.IsLetter(curChar))
+            {
+                builder.Append(curChar);
+                Reader.Read();
+
+                if (Reader.Peek() != -1)
+                {
+                    curChar = (char)Reader.Peek();
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            AddToken(builder.ToString(), start, ref tokens);
+        }
+
+        private void ParseLetter(ref List<Token> tokens)
+        {
+            char curChar = (char)Reader.Peek();
+            StringBuilder builder = new StringBuilder();
+
+            int start = Reader.Column;
+
+            while (char.IsLetterOrDigit(curChar) || curChar == LexerUtils.UNDERLINE)
             {
                 builder.Append(curChar);
                 Reader.Read();
@@ -176,14 +254,14 @@ namespace miniJ.Lexical
             AddToken(builder.ToString(), start, ref tokens, TokenType.NotDef_Number);
         }
 
-        private void ParseLetter(ref List<Token> tokens)
+        private void ParseStringAssigment(ref List<Token> tokens)
         {
+            int start = Reader.Column;
+            Reader.Read();
             char curChar = (char)Reader.Peek();
             StringBuilder builder = new StringBuilder();
 
-            int start = Reader.Column;
-
-            while (char.IsLetterOrDigit(curChar) || curChar == LexerUtils.UNDERLINE)
+            while (curChar != Delimiters.StringAssigment.Value[0])
             {
                 builder.Append(curChar);
                 Reader.Read();
@@ -198,7 +276,9 @@ namespace miniJ.Lexical
                 }
             }
 
-            AddToken(builder.ToString(), start, ref tokens);
+            Reader.Read();
+
+            AddToken(builder.ToString(), start, ref tokens, TokenType.NotDef_String);
         }
 
         private void ParseSymbolOrOperator(ref List<Token> tokens)
@@ -236,81 +316,6 @@ namespace miniJ.Lexical
             }
 
             AddToken(builder.ToString(), start, ref tokens);
-        }
-
-        private void ParseStringAssigment(ref List<Token> tokens)
-        {
-            int start = Reader.Column;
-            Reader.Read();
-            char curChar = (char)Reader.Peek();
-            StringBuilder builder = new StringBuilder();
-
-            while (curChar != Delimiters.StringAssigment.Value[0])
-            {
-                builder.Append(curChar);
-                Reader.Read();
-
-                if (Reader.Peek() != -1)
-                {
-                    curChar = (char)Reader.Peek();
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            Reader.Read();
-
-            AddToken(builder.ToString(), start, ref tokens, TokenType.NotDef_String);
-        }
-
-        private void ParseCharAssigment(ref List<Token> tokens)
-        {
-            int start = Reader.Column;
-            Reader.Read();
-            char curChar = (char)Reader.Peek();
-            StringBuilder builder = new StringBuilder();
-
-            while (curChar != Delimiters.CharAssigment.Value[0])
-            {
-                builder.Append(curChar);
-                Reader.Read();
-
-                if (Reader.Peek() != -1)
-                {
-                    curChar = (char)Reader.Peek();
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            Reader.Read();
-
-            AddToken(builder.ToString(), start, ref tokens, TokenType.NotDef_Char);
-        }
-
-        private void AddToken(string Value, int startPos, ref List<Token> tokens, TokenType specificTokenType = TokenType.NotDef_None)
-        {
-            NodeLocation location = new NodeLocation() { Column = startPos, Line = Reader.Line, File = CurrentFile };
-            Token token = new Token(Value) { Location = location, TokenType = specificTokenType }; ;
-
-            if (tokenDatabase.ContainsKey(Value))
-            {
-                token.TokenType = tokenDatabase[Value].TokenType;
-            }
-            else
-            {
-                if (token.TokenType == TokenType.NotDef_None)
-                {
-                    token.TokenType = TokenType.NotDef_Identifier;
-                }
-            }
-
-          //  Global.Logger.Log(token.ToString(), this);
-            tokens.Add(token);
         }
     }
 }

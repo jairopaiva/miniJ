@@ -4,17 +4,6 @@ using System.IO;
 
 namespace miniJ.Elements
 {
-    class Project
-    {
-        public List<Folder> Folders { get; set; }
-        public string Name { get; set; }
-        public ProjectTarget ProjectTarget { get; set; }
-
-        public Project()
-        {
-        }
-    }
-
     class File
     {
         public string Name { get; set; }
@@ -22,9 +11,6 @@ namespace miniJ.Elements
 
     class Folder
     {
-        public string Path { get; set; }
-        public List<File> Files { get; set; }
-
         public Folder(string path)
         {
             Files = new List<File>();
@@ -35,6 +21,9 @@ namespace miniJ.Elements
                 Path += Delimiters.Backslash.Value;
             }
         }
+
+        public List<File> Files { get; set; }
+        public string Path { get; set; }
 
         public static Folder Open(string path)
         {
@@ -47,5 +36,16 @@ namespace miniJ.Elements
             }
             return folder;
         }
+    }
+
+    class Project
+    {
+        public Project()
+        {
+        }
+
+        public List<Folder> Folders { get; set; }
+        public string Name { get; set; }
+        public ProjectTarget ProjectTarget { get; set; }
     }
 }

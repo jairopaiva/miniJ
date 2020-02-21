@@ -7,8 +7,6 @@ namespace miniJ.Parsing.Elements
     {
         private readonly List<Token> Tokens;
 
-        public int Position { get; set; }
-
         private int tempPos = 0;
 
         public TokenReader(List<Token> tokens)
@@ -16,19 +14,7 @@ namespace miniJ.Parsing.Elements
             Tokens = tokens;
         }
 
-        public Token Peek()
-        {
-            if (Position == Tokens.Count - 1)
-                return Grammar.Delimiters.EOF;
-            return Tokens[Position];
-        }
-
-        public Token Read()
-        {
-            if (Position == Tokens.Count - 1)
-                return Grammar.Delimiters.EOF;
-            return Tokens[Position++];
-        }
+        public int Position { get; set; }
 
         public Token this[int Index]
         {
@@ -38,19 +24,33 @@ namespace miniJ.Parsing.Elements
             }
         }
 
-        public void Reset()
-        {
-            tempPos = Position;
-        }
-
         public Token Next()
         {
             return Tokens[tempPos++];
         }
 
+        public Token Peek()
+        {
+            if (Position == Tokens.Count - 1)
+                return Grammar.Delimiters.EOF;
+            return Tokens[Position];
+        }
+
         public Token Previous()
         {
             return Tokens[tempPos--];
+        }
+
+        public Token Read()
+        {
+            if (Position == Tokens.Count - 1)
+                return Grammar.Delimiters.EOF;
+            return Tokens[Position++];
+        }
+
+        public void Reset()
+        {
+            tempPos = Position;
         }
     }
 }

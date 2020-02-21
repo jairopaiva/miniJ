@@ -3,7 +3,12 @@
     struct NodeLocation
     {
         public int Column { get; set; }
-        public int Line { get; set; }
         public string File { get; set; }
+        public int Line { get; set; }
+
+        public override string ToString()
+        {
+            return "Line: " + Line + " - Column: " + Column;
+        }
     }
 }

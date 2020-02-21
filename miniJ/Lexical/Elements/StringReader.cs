@@ -4,12 +4,7 @@
     {
         private readonly string Source;
 
-        public int Position { get; set; }
-
         private int tempPos = 0;
-
-        public int Line { get; set; }
-        public int Column { get; set; }
 
         public StringReader(string s)
         {
@@ -18,26 +13,9 @@
             Column = 1;
         }
 
-        public int Peek()
-        {
-            if (Position >= Source.Length)
-                return -1;
-            return (int)Source[Position];
-        }
-
-        public void NewLine()
-        {
-            Line++;
-            Column = 0;
-        }
-
-        public int Read()
-        {
-            if (Position >= Source.Length)
-                return -1;
-            Column++;
-            return (int)Source[Position++];
-        }
+        public int Column { get; set; }
+        public int Line { get; set; }
+        public int Position { get; set; }
 
         public int this[int Index]
         {
@@ -47,12 +25,10 @@
             }
         }
 
-        /// <summary>
-        /// Iguala a posição temporária com a atual.
-        /// </summary>
-        public void Reset()
+        public void NewLine()
         {
-            tempPos = Position;
+            Line++;
+            Column = 0;
         }
 
         /// <summary>
@@ -61,6 +37,13 @@
         public int Next()
         {
             return (int)Source[tempPos++];
+        }
+
+        public int Peek()
+        {
+            if (Position >= Source.Length)
+                return -1;
+            return (int)Source[Position];
         }
 
         /// <summary>
@@ -77,6 +60,22 @@
         public int Previous()
         {
             return (int)Source[tempPos--];
+        }
+
+        public int Read()
+        {
+            if (Position >= Source.Length)
+                return -1;
+            Column++;
+            return (int)Source[Position++];
+        }
+
+        /// <summary>
+        /// Iguala a posição temporária com a atual.
+        /// </summary>
+        public void Reset()
+        {
+            tempPos = Position;
         }
     }
 }

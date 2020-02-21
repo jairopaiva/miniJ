@@ -15,10 +15,12 @@ namespace miniJ.Helpers
             logTable = new Dictionary<ICompilerNode, StringBuilder>();
         }
 
-        public void Log(string message, ICompilerNode node)
+        public void AppendToFile(bool byNode = true)
         {
-            logTable[node].AppendLine(message);
-            Console.WriteLine(message);
+            StreamWriter logFile = new StreamWriter("Log_All.txt");
+            logFile.AutoFlush = true;
+            logFile.WriteLine(this.ToString());
+            logFile.Close();
         }
 
         public void CreateLogger(ICompilerNode node)
@@ -26,12 +28,10 @@ namespace miniJ.Helpers
             logTable.Add(node, new StringBuilder());
         }
 
-        public void AppendToFile(bool byNode = true)
+        public void Log(string message, ICompilerNode node)
         {
-            StreamWriter logFile = new StreamWriter("Log_All.txt");
-            logFile.AutoFlush = true;
-            logFile.WriteLine(this.ToString());
-            logFile.Close();
+            logTable[node].AppendLine(message);
+            Console.WriteLine(message);
         }
 
         public override string ToString()

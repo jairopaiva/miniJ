@@ -10,63 +10,19 @@ namespace miniJ.Helpers
 {
     class Global
     {
-        public static Logger Logger;
-        public static Lexer Lexer;
-        public static PreProcessor PreProcessor;
-        public static List<Token> lexerTokenCollection;
-        public static Dictionary<string, Token> tokenDatabase;   // Dicionário contendo os tokens padrões da linguagem
-        public static Project Project;
         public static Namespace GlobalNamespace;
-
-        public static void Reset()
-        {
-            SetUpGlobalNamespace();
-            SetUpTokenDatabase();
-            SetUpProject();
-            SetUpLexer();
-            SetUpLogger();
-            SetUpPreProcessor();
-        }
+        public static Lexer Lexer;
+        public static List<Token> lexerTokenCollection;
+        public static Logger Logger;
+        public static PreProcessor PreProcessor;
+        public static Project Project;
+        public static Dictionary<string, Token> tokenDatabase;   // Dicionário contendo os tokens padrões da linguagem
 
         public static void Compile()
         {
             LexicalProcess();
-          //  Logger.AppendToFile();
+            //  Logger.AppendToFile();
             PreProcessor.Process();
-        }
-
-        private static void SetUpGlobalNamespace()
-        {
-            GlobalNamespace = new Namespace(null, null);
-            GlobalNamespace.Name = "global";
-        }
-
-        private static void SetUpProject()
-        {
-            string projectFolder = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\..\\"));
-            Project = new Project() { Name = "SampleCodes" };
-            Project.Folders = new List<Folder>()
-            {
-                Folder.Open(projectFolder+@"\SampleCodes")//,
-                // Folder.Open(projectFolder+@"\SampleCodes\TestPath")
-            };
-        }
-
-        private static void SetUpLogger()
-        {
-            Logger = new Logger();
-            Logger.CreateLogger(Lexer);
-        }
-
-        private static void SetUpLexer()
-        {
-            lexerTokenCollection = new List<Token>();
-            Lexer = new Lexer();
-        }
-
-        private static void SetUpPreProcessor()
-        {
-            PreProcessor = new PreProcessor();
         }
 
         public static void LexicalProcess()
@@ -80,6 +36,49 @@ namespace miniJ.Helpers
                 Delimiters.EOF.Copy(lexerTokenCollection[lexerTokenCollection.Count - 1].Location));
         }
 
+        public static void Reset()
+        {
+            SetUpGlobalNamespace();
+            SetUpTokenDatabase();
+            SetUpProject();
+            SetUpLexer();
+            SetUpLogger();
+            SetUpPreProcessor();
+        }
+
+        private static void SetUpGlobalNamespace()
+        {
+            GlobalNamespace = new Namespace(Keywords.Global, null);
+        }
+
+        private static void SetUpLexer()
+        {
+            lexerTokenCollection = new List<Token>();
+            Lexer = new Lexer();
+        }
+
+        private static void SetUpLogger()
+        {
+            Logger = new Logger();
+            Logger.CreateLogger(Lexer);
+        }
+
+        private static void SetUpPreProcessor()
+        {
+            PreProcessor = new PreProcessor();
+        }
+
+        private static void SetUpProject()
+        {
+            string projectFolder = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\..\\"));
+            Project = new Project() { Name = "SampleCodes" };
+            Project.Folders = new List<Folder>()
+            {
+                Folder.Open(projectFolder+@"\SampleCodes")//,
+                // Folder.Open(projectFolder+@"\SampleCodes\TestPath")
+            };
+        }
+
         private static void SetUpTokenDatabase()
         {
             tokenDatabase = new Dictionary<string, Token>()
@@ -87,17 +86,17 @@ namespace miniJ.Helpers
                 { AccessModifier.Private.Value, AccessModifier.Private },
                 { AccessModifier.Protected.Value, AccessModifier.Protected },
                 { AccessModifier.Public.Value, AccessModifier.Public },
-
                 { Comparators.And.Value, Comparators.And },
                 { Comparators.Different.Value, Comparators.Different },
-                { Comparators.Inequality.Value, Comparators.Inequality },
                 { Comparators.Equal.Value, Comparators.Equal },
                 { Comparators.GreaterThan.Value, Comparators.GreaterThan },
-                { Comparators.LessThan.Value, Comparators.LessThan },
                 { Comparators.GreaterThanOrEqual.Value, Comparators.GreaterThanOrEqual },
+                { Comparators.Inequality.Value, Comparators.Inequality },
+                { Comparators.LessThan.Value, Comparators.LessThan },
                 { Comparators.LessThanOrEqual.Value, Comparators.LessThanOrEqual },
                 { Comparators.Or.Value, Comparators.Or },
 
+                { Delimiters.Backslash.Value, Delimiters.Backslash },
                 { Delimiters.CBlock.Value, Delimiters.CBlock },
                 { Delimiters.CIndex.Value, Delimiters.CIndex },
                 { Delimiters.CInstruction.Value, Delimiters.CInstruction },
@@ -108,7 +107,6 @@ namespace miniJ.Helpers
                 { Delimiters.OBlock.Value, Delimiters.OBlock },
                 { Delimiters.OIndex.Value, Delimiters.OIndex },
                 { Delimiters.OParenthesis.Value, Delimiters.OParenthesis },
-                { Delimiters.Backslash.Value, Delimiters.Backslash },
                 { Delimiters.TwoCollon.Value, Delimiters.TwoCollon },
 
                 { Directives.Define.Value, Directives.Define },
@@ -138,7 +136,6 @@ namespace miniJ.Helpers
                 { Keywords.False.Value, Keywords.False },
                 { Keywords.For.Value, Keywords.For },
                 { Keywords.If.Value, Keywords.If },
-                { Keywords.Import.Value, Keywords.Import },
                 { Keywords.Interface.Value, Keywords.Interface},
                 { Keywords.Namespace.Value, Keywords.Namespace },
                 { Keywords.New.Value, Keywords.New },
@@ -153,18 +150,9 @@ namespace miniJ.Helpers
                 { Keywords.True.Value, Keywords.True },
                 { Keywords.Try.Value, Keywords.Try },
                 { Keywords.Unsigned.Value, Keywords.Unsigned },
+                { Keywords.Using.Value, Keywords.Using },
                 { Keywords.Volatile.Value, Keywords.Volatile },
                 { Keywords.While.Value, Keywords.While  },
-
-                { Types.Bool.Value, Types.Bool },
-                { Types.Byte.Value, Types.Byte },
-                { Types.Char.Value, Types.Char },
-                { Types.Double.Value, Types.Double },
-                { Types.Float.Value, Types.Float },
-                { Types.Int.Value, Types.Int },
-                { Types.Long.Value, Types.Long },
-                { Types.String.Value, Types.String },
-                { Types.Void.Value, Types.Void },
 
                 { Operators.Add.Value, Operators.Add },
                 { Operators.AddAssign.Value, Operators.AddAssign },
@@ -176,7 +164,17 @@ namespace miniJ.Helpers
                 { Operators.Or.Value, Operators.Or },
                 { Operators.Power.Value, Operators.Power },
                 { Operators.Sub.Value, Operators.Sub },
-                { Operators.SubAssign.Value, Operators.SubAssign }
+                { Operators.SubAssign.Value, Operators.SubAssign },
+
+                { Types.Bool.Value, Types.Bool },
+                { Types.Byte.Value, Types.Byte },
+                { Types.Char.Value, Types.Char },
+                { Types.Double.Value, Types.Double },
+                { Types.Float.Value, Types.Float },
+                { Types.Int.Value, Types.Int },
+                { Types.Long.Value, Types.Long },
+                { Types.String.Value, Types.String },
+                { Types.Void.Value, Types.Void },
             };
         }
     }

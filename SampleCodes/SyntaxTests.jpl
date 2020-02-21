@@ -1,4 +1,4 @@
-namespace jairo.paiva.Tey // Comentario namespace
+namespace namespace_1.Tey // Comentario namespace
 {
     public class SyntaxTests
     {
@@ -23,3 +23,8 @@ namespace jairo.paiva.Tey // Comentario namespace
 	}
 }
  // Comentario EOF
+ 
+ namespace namespace_2.Shmily // Comentario namespace
+{}
+namespace namespace_3
+{}

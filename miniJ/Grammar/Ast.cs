@@ -13,10 +13,10 @@ namespace miniJ.Grammar
     {
         public static readonly Token And = new Token("&&") { TokenType = TokenType.Comparator_And };
         public static readonly Token Different = new Token("!=") { TokenType = TokenType.Comparator_Different };
-        public static readonly Token Inequality = new Token("!") { TokenType = TokenType.Comparator_Inequality };
         public static readonly Token Equal = new Token("==") { TokenType = TokenType.Comparator_Equal };
         public static readonly Token GreaterThan = new Token(">") { TokenType = TokenType.Comparator_GreaterThan };
         public static readonly Token GreaterThanOrEqual = new Token(">=") { TokenType = TokenType.Comparator_GreaterThanOrEqual };
+        public static readonly Token Inequality = new Token("!") { TokenType = TokenType.Comparator_Inequality };
         public static readonly Token LessThan = new Token("<") { TokenType = TokenType.Comparator_LessThan };
         public static readonly Token LessThanOrEqual = new Token("<=") { TokenType = TokenType.Comparator_LessThanOrEqual };
         public static readonly Token Or = new Token("||") { TokenType = TokenType.Comparator_Or };
@@ -74,7 +74,6 @@ namespace miniJ.Grammar
         public static readonly Token For = new Token("for") { TokenType = TokenType.Keyword_For };
         public static readonly Token Global = new Token("global") { TokenType = TokenType.Keyword_Global };
         public static readonly Token If = new Token("if") { TokenType = TokenType.Keyword_If };
-        public static readonly Token Import = new Token("import") { TokenType = TokenType.Keyword_Import };
         public static readonly Token Interface = new Token("interface") { TokenType = TokenType.Keyword_Interface };
         public static readonly Token Namespace = new Token("namespace") { TokenType = TokenType.Keyword_Namespace };
         public static readonly Token New = new Token("new") { TokenType = TokenType.Keyword_New };
@@ -89,6 +88,7 @@ namespace miniJ.Grammar
         public static readonly Token True = new Token("true") { TokenType = TokenType.Keyword_True };
         public static readonly Token Try = new Token("try") { TokenType = TokenType.Keyword_Try };
         public static readonly Token Unsigned = new Token("unsigned") { TokenType = TokenType.Keyword_Unsigned };
+        public static readonly Token Using = new Token("using") { TokenType = TokenType.Keyword_Using };
         public static readonly Token Volatile = new Token("volatile") { TokenType = TokenType.Keyword_Volatile };
         public static readonly Token While = new Token("while") { TokenType = TokenType.Keyword_While };
         //   public static readonly Token Register = new Token("register"; // The register keyword creates register variables which are much faster than normal variables.
