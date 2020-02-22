@@ -42,8 +42,8 @@ namespace miniJ.Helpers
             SetUpTokenDatabase();
             SetUpProject();
             SetUpLexer();
-            SetUpLogger();
             SetUpPreProcessor();
+            SetUpLogger();
         }
 
         private static void SetUpGlobalNamespace()
@@ -61,6 +61,7 @@ namespace miniJ.Helpers
         {
             Logger = new Logger();
             Logger.CreateLogger(Lexer);
+            Logger.CreateLogger(PreProcessor);
         }
 
         private static void SetUpPreProcessor()

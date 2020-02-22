@@ -1,5 +1,6 @@
 ﻿using miniJ.Elements.Base;
 using miniJ.Lexical.Elements.Token;
+using miniJ.Parsing;
 
 namespace miniJ.Elements
 {
@@ -7,7 +8,8 @@ namespace miniJ.Elements
     {
         public CISE(string name, CISEType type, Token origin) : base(origin)
         {
-            Name = name;
+            if (ParserUtils.ValidIdentifier(name))
+                Name = name;
             Type = type;
         }
 

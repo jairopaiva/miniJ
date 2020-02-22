@@ -33,17 +33,4 @@ namespace miniJ.Elements
             return clone;
         }
     }
-
-    /*
-    class RootNamespace : Namespace
-    {
-        public RootNamespace() : base(null, null)
-        {
-            AllCISEs = new Dictionary<string, CISE>();
-            AllNamespaces = new Dictionary<string, Namespace>();
-        }
-
-        public Dictionary<string, Namespace> AllNamespaces { get; set; }
-        public Dictionary<string, CISE> AllCISEs { get; set; }
-    }*/
 }

@@ -17,13 +17,44 @@ namespace miniJ.Parsing
     {
         public readonly TokenReader Reader;
 
-        public Namespace currentNamespace = Helpers.Global.GlobalNamespace;
+        public Namespace currentNamespace;
 
         public Token curToken;
+
+        private int _closedBlock;
+        private int _openedBlocks;
+        private object accessModifier;
 
         public PreProcessor()
         {
             Reader = new TokenReader(Helpers.Global.lexerTokenCollection);
+            currentNamespace = Helpers.Global.GlobalNamespace;
+            _openedBlocks = 0;
+            _closedBlock = 0;
+            accessModifier = null;
+        }
+
+        /// <summary>
+        /// Retonar o modificador de accesso que provavelmente, já foi achado, caso não tenha sido declarado
+        /// de forma explicita, a função retorna o modificador de acesso padrão para o tipo de objeto.
+        /// </summary>
+        /// <param name="defaultAccessModifier">Modificador de acesso padrão caso não o tenha</param>
+        /// <returns>Modificador de acesso</returns>
+        public AccessModifierEnum GetAccessModifier(AccessModifierEnum defaultAccessModifier)
+        {
+            if (accessModifier != null)
+            {
+                if (accessModifier.GetType() == typeof(Token))
+                {
+                    AccessModifierEnum result = ParserUtils.GetAccessModifier((accessModifier as Token).TokenType);
+                    accessModifier = null;
+                    return result;
+                }
+                else
+                    throw new Exception();
+            }
+
+            return defaultAccessModifier;
         }
 
         public void Process()
@@ -45,6 +76,7 @@ namespace miniJ.Parsing
                 }
                 else if (curToken.TokenType == TokenType.Keyword_Using)
                 {
+                    ProcessUsing();
                 }
                 else
                 {
@@ -63,10 +95,22 @@ namespace miniJ.Parsing
                 Console.ReadKey();
         }
 
-        private void ExpectToken(TokenType expectedToken)
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="expectedToken">Token esperado</param>
+        /// <param name="throwable">Se verdadeiro, ele cria uma exceção ao não achar o token esperado</param>
+        /// <returns>Satisfez a condição, encontrou o token esperado?</returns>
+        private bool Expected_Token(TokenType expectedToken, bool throwable = true)
         {
+            bool result = true;
             if (curToken.TokenType != expectedToken)
-                throw new Exception("Expected '" + LexerUtils.GetTokenValueByType(expectedToken) + "' at " + curToken.Location.ToString());
+            {
+                result = false;
+                if (throwable)
+                    throw new Exception("Expected '" + LexerUtils.GetTokenValueByType(expectedToken) + "' at " + curToken.Location.ToString());
+            }
+            return result;
         }
 
         private void Log(string info, bool readKey = false)
@@ -80,10 +124,27 @@ namespace miniJ.Parsing
         {
             Reader.Read();
             curToken = Reader.Peek();
+            switch (curToken.TokenType)
+            {
+                case TokenType.Delimiter_OBlock:
+                    _openedBlocks++;
+                    break;
+
+                case TokenType.Delimiter_CBlock:
+                    _closedBlock++;
+                    break;
+            }
         }
 
         private void ProcessAccessModifier()
         {
+            if (accessModifier == null) // Esperado, caso contrário, algo deu errado previamente
+            {
+                accessModifier = curToken;
+                Next();
+            }
+            else
+                throw new Exception();
         }
 
         private void ProcessCISE()
@@ -113,6 +174,18 @@ namespace miniJ.Parsing
 
         private void ProcessClass()
         {
+            Next(); // class
+            Class Classe = new Class(curToken.Value, curToken);
+            Classe.AccessModifier = GetAccessModifier(AccessModifierEnum.Private);
+            Next();
+            if (Expected_Token(TokenType.Delimiter_Collon, false))
+            {
+                while (curToken.TokenType != TokenType.Delimiter_OBlock)
+                    Next();
+            }
+
+            Expected_Token(TokenType.Delimiter_OBlock);
+            Next();
         }
 
         private List<Token> ProcessDotExpr(TokenType delimiter, bool Identifier = false)
@@ -143,10 +216,18 @@ namespace miniJ.Parsing
 
         private void ProcessNamespace()
         {
-            Next();
+            Next(); // namespace
+
+            if (curToken.TokenType == TokenType.Delimiter_OBlock) // namespace com nome vazio
+                goto namespaceGlobal;
 
             List<Token> namespaceName = ProcessDotExpr(TokenType.Delimiter_OBlock);
-            Namespace curGlobal = Helpers.Global.GlobalNamespace.Clone();
+            Namespace curGlobal = null;
+
+            if (_openedBlocks != _closedBlock)
+                curGlobal = currentNamespace;
+            else
+                curGlobal = Helpers.Global.GlobalNamespace.Clone();
 
             foreach (Token nameToken in namespaceName)
             {
@@ -167,9 +248,21 @@ namespace miniJ.Parsing
                 }
             }
 
+            currentNamespace = curGlobal;
+
             Log("Created namespace: " + ParserUtils.GetDotExpr(namespaceName));
-            ExpectToken(TokenType.Delimiter_OBlock);
-            Next();
+
+        verificaNamespaceVazio:
+            Next(); // {
+            if (curToken.TokenType == TokenType.Delimiter_CBlock) // Namespace vazio
+            {
+                throw new Exception("Cannot declare empthy namespaces!");
+            }
+            return;
+
+        namespaceGlobal: // o namespace foi declarado sem nome, ou seja, tudo dentro dele fará parte de 'global'
+            currentNamespace = Helpers.Global.GlobalNamespace;
+            goto verificaNamespaceVazio;
         }
 
         private void ProcessStruct()
@@ -178,6 +271,10 @@ namespace miniJ.Parsing
 
         private void ProcessUsing()
         {
+            Next(); // using
+            List<Token> usingPath = ProcessDotExpr(TokenType.Delimiter_CInstruction, true);
+            Log("Using at: " + currentNamespace.Name + " - Complete path: " + ParserUtils.GetDotExpr(usingPath));
+            Next(); // ;
         }
     }
 }

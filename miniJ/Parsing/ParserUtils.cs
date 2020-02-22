@@ -1,6 +1,8 @@
 ﻿using miniJ.Grammar;
 using miniJ.Lexical;
 using miniJ.Lexical.Elements.Token;
+using miniJ.Parsing.Elements;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -8,6 +10,24 @@ namespace miniJ.Parsing
 {
     class ParserUtils
     {
+        public static AccessModifierEnum GetAccessModifier(TokenType tokenType)
+        {
+            switch (tokenType)
+            {
+                case TokenType.AccessModifier_Private:
+                    return AccessModifierEnum.Private;
+
+                case TokenType.AccessModifier_Protected:
+                    return AccessModifierEnum.Protected;
+
+                case TokenType.AccessModifier_Public:
+                    return AccessModifierEnum.Public;
+
+                default:
+                    throw new Exception();
+            }
+        }
+
         public static string GetDotExpr(List<Token> tokens)
         {
             StringBuilder builder = new StringBuilder();

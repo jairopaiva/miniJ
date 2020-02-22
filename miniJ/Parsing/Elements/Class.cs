@@ -1,4 +1,5 @@
 ﻿using miniJ.Lexical.Elements.Token;
+using miniJ.Parsing.Elements;
 
 namespace miniJ.Elements
 {
@@ -7,5 +8,7 @@ namespace miniJ.Elements
         public Class(string name, Token origin) : base(name, CISEType.Class, origin)
         {
         }
+
+        public AccessModifierEnum AccessModifier { get; set; }
     }
 }

@@ -1,5 +1,13 @@
 namespace namespace_1.Tey // Comentario namespace
 {
+
+namespace // Comentario namespace
+{
+	public struct EstruturaGlobal{
+		public int bla;
+	}
+}
+
     public class SyntaxTests
     {
 		public int[] arrayDeInt = new int[]{0xff, 0x00000, 0x123, -123};
