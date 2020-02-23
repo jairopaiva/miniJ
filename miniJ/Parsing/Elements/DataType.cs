@@ -4,25 +4,25 @@ using miniJ.Parsing;
 
 namespace miniJ.Elements
 {
-    class CISE : ISyntaxNode
+    class DataType : ISyntaxNode
     {
-        public CISE(string name, CISEType type, Token origin) : base(origin)
+        public DataType(string name, SpecificTypeOfData type, Token origin) : base(origin)
         {
             if (ParserUtils.ValidIdentifier(name))
                 Name = name;
-            Type = type;
+            SpecificType = type;
         }
 
-        public enum CISEType
+        public enum SpecificTypeOfData
         {
             Class,
             Interface,
             Struct,
-            Enum
+            Enum,
+            PrimitiveType
         }
 
         public string Name { get; set; }
-        public Namespace RefNamespace { get; set; }
-        public CISEType Type { get; set; }
+        public SpecificTypeOfData SpecificType { get; set; }
     }
 }

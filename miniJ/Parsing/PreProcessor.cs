@@ -185,7 +185,7 @@ namespace miniJ.Parsing
             }
 
             Expected_Token(TokenType.Delimiter_OBlock);
-            Next();
+            Next(); // {
         }
 
         private List<Token> ProcessDotExpr(TokenType delimiter, bool Identifier = false)

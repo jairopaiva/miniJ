@@ -12,13 +12,13 @@ namespace miniJ.Elements
         {
             Name = origin.Value;
             Childs = new List<Namespace>();
-            CISEs = new Dictionary<string, CISE>();
+            CISEs = new Dictionary<string, DataType>();
             Imports = new List<Namespace>();
             Parent = parent;
         }
 
         public List<Namespace> Childs { get; set; }
-        public Dictionary<string, CISE> CISEs { get; set; }
+        public Dictionary<string, DataType> CISEs { get; set; }
         public List<Namespace> Imports { get; set; }
         public string Name { get; set; } // Nome específico
 
