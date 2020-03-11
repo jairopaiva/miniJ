@@ -2,7 +2,7 @@
 
 namespace miniJ.Elements.Base
 {
-    class ISyntaxNode
+     class ISyntaxNode
     {
         public ISyntaxNode(Token origin)// = null)
         {

@@ -83,6 +83,7 @@
         NotDef_None,
         NotDef_Number,
         NotDef_String,
+        NotDef_TypeIdentifier,
 
         Operator_Add,
         Operator_AddAssign,

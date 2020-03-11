@@ -1,6 +1,8 @@
 ﻿using miniJ.Elements.Base;
 using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing;
+using miniJ.Parsing.Elements;
+using System.Collections.Generic;
 
 namespace miniJ.Elements
 {
@@ -11,6 +13,7 @@ namespace miniJ.Elements
             if (ParserUtils.ValidIdentifier(name))
                 Name = name;
             SpecificType = type;
+            Variables = new List<Variable>();
         }
 
         public enum SpecificTypeOfData
@@ -24,5 +27,6 @@ namespace miniJ.Elements
 
         public string Name { get; set; }
         public SpecificTypeOfData SpecificType { get; set; }
+        public List<Variable> Variables { get; set; }
     }
 }

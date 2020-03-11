@@ -3,6 +3,7 @@ using miniJ.Grammar;
 using miniJ.Helpers;
 using miniJ.Lexical.Elements;
 using miniJ.Lexical.Elements.Token;
+using miniJ.Parsing;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -28,6 +29,7 @@ namespace miniJ.Lexical
 
         public string CurrentSourceCode { get; set; }
         public StringReader Reader { get; set; }
+        private bool _nextTokenCISEIdentifier;
 
         public List<Token> Scan(string filePath)
         {
@@ -35,6 +37,7 @@ namespace miniJ.Lexical
             Reader = new StringReader(CurrentSourceCode);
             List<Token> Tokens = new List<Token>();
             CurrentFile = filePath;
+            _nextTokenCISEIdentifier = false;
 
             while (Reader.Peek() != -1)
             {
@@ -96,12 +99,24 @@ namespace miniJ.Lexical
             if (tokenDatabase.ContainsKey(Value))
             {
                 token.TokenType = tokenDatabase[Value].TokenType;
+
+                if (ParserUtils.IsCISE(token))
+                {
+                    _nextTokenCISEIdentifier = true;
+                }
             }
             else
             {
                 if (token.TokenType == TokenType.NotDef_None)
                 {
-                    token.TokenType = TokenType.NotDef_Identifier;
+                    if (!_nextTokenCISEIdentifier)
+                        token.TokenType = TokenType.NotDef_Identifier;
+                    else
+                    {
+                        token.TokenType = TokenType.NotDef_TypeIdentifier;
+                        Helpers.Global.cisesDetectedInLexer.Add(token);
+                        _nextTokenCISEIdentifier = false;
+                    }
                 }
             }
 

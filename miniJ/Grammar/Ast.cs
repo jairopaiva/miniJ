@@ -2,14 +2,14 @@
 
 namespace miniJ.Grammar
 {
-    class AccessModifier
+     class AccessModifier
     {
         public static readonly Token Private = new Token("private") { TokenType = TokenType.AccessModifier_Private };
         public static readonly Token Protected = new Token("protected") { TokenType = TokenType.AccessModifier_Protected };
         public static readonly Token Public = new Token("public") { TokenType = TokenType.AccessModifier_Public };
     }
 
-    class Comparators
+     class Comparators
     {
         public static readonly Token And = new Token("&&") { TokenType = TokenType.Comparator_And };
         public static readonly Token Different = new Token("!=") { TokenType = TokenType.Comparator_Different };
@@ -22,7 +22,7 @@ namespace miniJ.Grammar
         public static readonly Token Or = new Token("||") { TokenType = TokenType.Comparator_Or };
     }
 
-    class Delimiters
+     class Delimiters
     {
         public static readonly Token Backslash = new Token(@"\") { TokenType = TokenType.Delimiter_Backslash };
         public static readonly Token CBlock = new Token("}") { TokenType = TokenType.Delimiter_CBlock };
@@ -41,7 +41,7 @@ namespace miniJ.Grammar
         public static readonly Token TwoCollon = new Token("::") { TokenType = TokenType.Delimiter_TwoCollon };
     }
 
-    class Directives
+     class Directives
     {
         public static readonly Token Define = new Token("#define") { TokenType = TokenType.Directive_Define };
         public static readonly Token ElseIf = new Token("#elif") { TokenType = TokenType.Directive_ElseIf };
@@ -54,7 +54,7 @@ namespace miniJ.Grammar
         public static readonly Token UnDef = new Token("#undef") { TokenType = TokenType.Directive_UnDef };
     }
 
-    class Keywords
+     class Keywords
     {
         public static readonly Token Asm = new Token("asm") { TokenType = TokenType.Keyword_Asm };
         public static readonly Token Auto = new Token("auto") { TokenType = TokenType.Keyword_Auto };
@@ -95,7 +95,7 @@ namespace miniJ.Grammar
         //   public static readonly Token Onion = new Token("union"; // A Union is used for grouping different types of variable under a single name and allocates memory only of the biggest variable.
     }
 
-    class Operators
+     class Operators
     {
         public static readonly Token Add = new Token("+") { TokenType = TokenType.Operator_Add };
         public static readonly Token AddAssign = new Token("+=") { TokenType = TokenType.Operator_AddAssign };
@@ -110,7 +110,7 @@ namespace miniJ.Grammar
         public static readonly Token SubAssign = new Token("-=") { TokenType = TokenType.Operator_SubAssign };
     }
 
-    class Types
+     class Types
     {
         public static readonly Token Bool = new Token("bool") { TokenType = TokenType.PrimitiveType_Bool };
         public static readonly Token Byte = new Token("byte") { TokenType = TokenType.PrimitiveType_Byte };

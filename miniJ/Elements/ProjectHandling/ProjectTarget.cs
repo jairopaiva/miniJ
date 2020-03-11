@@ -1,6 +1,6 @@
 ﻿namespace miniJ.Elements
 {
-    struct ProjectTarget
+     struct ProjectTarget
     {
         public enum Architecture
         {

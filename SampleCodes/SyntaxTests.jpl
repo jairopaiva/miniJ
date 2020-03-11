@@ -1,19 +1,9 @@
 namespace namespace_1.Tey // Comentario namespace
 {
 
-namespace // Comentario namespace
-{
-	public struct EstruturaGlobal{
-		public int bla;
-	}
-}
-
     public class SyntaxTests
     {
-		public int[] arrayDeInt = new int[]{0xff, 0x00000, 0x123, -123};
-		public float[] testFloat = new float[] {1.232151, 123.321};
-		public byte[] notInitialized;
-		
+	
 		public void Tet_Undeline(int[] arg){
 			
 			char newLine = '\n';
@@ -28,6 +18,11 @@ namespace // Comentario namespace
 			if(!boolTest)
 				arg[0]=0x01;
 		}
+		
+		public int[] arrayDeInt = new int[]{0xff, 0x00000, 0x123, -123};
+		public float[] testFloat = new float[] {1.232151, 123.321};
+		public byte[] notInitialized;
+		
 	}
 }
  // Comentario EOF
@@ -36,3 +31,11 @@ namespace // Comentario namespace
 {}
 namespace namespace_3
 {}
+
+namespace // Comentario namespace
+{
+	public struct EstruturaGlobal
+	{
+		public int bla;
+	}
+}

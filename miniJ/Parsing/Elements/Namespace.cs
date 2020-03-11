@@ -1,6 +1,7 @@
 ﻿using miniJ.Elements.Base;
 using miniJ.Lexical.Elements.Token;
 using System.Collections.Generic;
+using System.Text;
 
 namespace miniJ.Elements
 {
@@ -31,6 +32,28 @@ namespace miniJ.Elements
                 Imports = this.Imports
             };
             return clone;
+        }
+
+        public override string ToString()
+        {
+            StringBuilder namespaceCompletePath = new StringBuilder();
+            List<string> namespaceNames = new List<string>();
+            Namespace n = this;
+            while (n != null)
+            {
+                string name = n.Name;
+                namespaceNames.Add(name);
+                n = n.Parent;
+            }
+            namespaceNames.Reverse();
+            int limit = namespaceNames.Count - 1;
+            for (int i = 0; i < namespaceNames.Count; i++)
+            {
+                namespaceCompletePath.Append(namespaceNames[i]);
+                if (i != limit)
+                    namespaceCompletePath.Append(".");
+            }
+            return namespaceCompletePath.ToString();
         }
     }
 }

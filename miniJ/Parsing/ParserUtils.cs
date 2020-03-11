@@ -28,6 +28,25 @@ namespace miniJ.Parsing
             }
         }
 
+        public static string GetExpectedTokenListAsString(TokenType[] list)
+        {
+            StringBuilder builder = new StringBuilder('[');
+            for (int i = 0; i < list.Length; i++)
+            {
+                string tokenValue = LexerUtils.GetTokenValueByType(list[i]);
+                if (i == list.Length - 1)
+                {
+                    builder.Append(tokenValue + ']');
+                }
+                else
+                {
+                    builder.Append(tokenValue + ", ");
+                }
+            }
+
+            return builder.ToString();
+        }
+
         public static string GetDotExpr(List<Token> tokens)
         {
             StringBuilder builder = new StringBuilder();
@@ -44,13 +63,6 @@ namespace miniJ.Parsing
                 }
             }
             return builder.ToString();
-        }
-
-        public static bool IsAccessModifier(Token token)
-        {
-            return token.TokenType == TokenType.AccessModifier_Private ||
-                token.TokenType == TokenType.AccessModifier_Protected ||
-                token.TokenType == TokenType.AccessModifier_Public;
         }
 
         public static bool IsCISE(Token token)

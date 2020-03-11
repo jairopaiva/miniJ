@@ -36,6 +36,11 @@ namespace miniJ.Parsing.Elements
             return Tokens[Position];
         }
 
+        public Token PeekTemp()
+        {
+            return Tokens[tempPos];
+        }
+
         public Token Previous()
         {
             return Tokens[tempPos--];

@@ -37,5 +37,19 @@
                 info = this.Location.File + " :: " + info;
             return info;
         }
+
+        public bool IsToken(string type)
+        {
+            return this.TokenType.ToString().StartsWith(type);
+        }
+
+        public const string ACCESS_MODIFIER = "AccessModifier";
+        public const string COMPARATOR = "Comparator";
+        public const string DELIMITER = "Delimiter";
+        public const string DIRECTIVE = "Directive";
+        public const string KEYWORD = "Keyword";
+        public const string OPERATOR = "Operator";
+        public const string NOT_DEF = "NotDef";
+        public const string PRIMITIVE_TYPE = "PrimitiveType";
     }
 }

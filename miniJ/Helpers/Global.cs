@@ -13,6 +13,7 @@ namespace miniJ.Helpers
         public static Namespace GlobalNamespace;
         public static Lexer Lexer;
         public static List<Token> lexerTokenCollection;
+        public static List<Token> cisesDetectedInLexer;
         public static Logger Logger;
         public static PreProcessor PreProcessor;
         public static Project Project;
@@ -53,6 +54,7 @@ namespace miniJ.Helpers
 
         private static void SetUpLexer()
         {
+            cisesDetectedInLexer = new List<Token>();
             lexerTokenCollection = new List<Token>();
             Lexer = new Lexer();
         }

@@ -1,6 +1,5 @@
 ﻿using miniJ.Elements;
 using miniJ.Elements.Base;
-using miniJ.Lexical;
 using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing.Elements;
 using System;
@@ -18,6 +17,8 @@ namespace miniJ.Parsing
         public readonly TokenReader Reader;
 
         public Namespace currentNamespace;
+        public DataType currentCISE;
+        public Method currentMethod;
 
         public Token curToken;
 
@@ -32,6 +33,8 @@ namespace miniJ.Parsing
             _openedBlocks = 0;
             _closedBlock = 0;
             accessModifier = null;
+            currentCISE = null;
+            currentMethod = null;
         }
 
         /// <summary>
@@ -51,7 +54,7 @@ namespace miniJ.Parsing
                     return result;
                 }
                 else
-                    throw new Exception();
+                    Error("GetAccessModifier");
             }
 
             return defaultAccessModifier;
@@ -66,7 +69,7 @@ namespace miniJ.Parsing
                 {
                     ProcessNamespace();
                 }
-                else if (ParserUtils.IsAccessModifier(curToken))
+                else if (curToken.IsToken(Token.ACCESS_MODIFIER))
                 {
                     ProcessAccessModifier();
                 }
@@ -80,9 +83,63 @@ namespace miniJ.Parsing
                 }
                 else
                 {
-                    throw new System.Exception();
+                    Error("");
                 }
             }
+        }
+
+        private AssignmentExpression ParseAssignmentExpr()
+        {
+            return null;
+        }
+
+        private void ParseMethod(Token name, Token type)
+        {
+            switch (currentCISE.SpecificType)
+            {
+            }
+        }
+
+        private void ParseMethodParametrsDclr(Token name, Token type, Method curMethod = null)
+        {
+            Next(); // (
+            List<ParameterDeclaration> parameters = new List<ParameterDeclaration>();
+            if (curMethod == null)
+            {
+                curMethod = currentMethod;
+            }
+            {
+                Expected_Token(false, TokenType.NotDef_TypeIdentifier);
+            }
+            Next();
+            switch (curToken.TokenType)
+            {
+                case TokenType.Delimiter_OBlock:
+                    if (curMethod.CISE.SpecificType == DataType.SpecificTypeOfData.Interface)
+                    {
+                        Error("Can't declare method body in an interface!");
+                    }
+                    break;
+
+                default:
+                    if (curMethod.CISE.SpecificType == DataType.SpecificTypeOfData.Interface)
+                    {
+                        Expected_Token(true, TokenType.Delimiter_CInstruction);
+                    }
+                    else
+                    {
+                        Expected_Token(true, TokenType.Delimiter_CInstruction);
+                    }
+                    break;
+            }
+            curMethod.Parameters = parameters;
+        }
+
+        private Variable ParseVariableDeclaration(bool methodReturn = false, bool parameterDclr = false)
+        {
+            Expected_Token(true, TokenType.NotDef_TypeIdentifier);
+            Token type = curToken;
+            return null;
         }
 
         private void Debug(bool readKey = false, string text = "", Token token = null)
@@ -101,15 +158,22 @@ namespace miniJ.Parsing
         /// <param name="expectedToken">Token esperado</param>
         /// <param name="throwable">Se verdadeiro, ele cria uma exceção ao não achar o token esperado</param>
         /// <returns>Satisfez a condição, encontrou o token esperado?</returns>
-        private bool Expected_Token(TokenType expectedToken, bool throwable = true)
+        private bool Expected_Token(bool throwable, params TokenType[] expectedTokens)
         {
-            bool result = true;
-            if (curToken.TokenType != expectedToken)
+            bool result = false;
+
+            for (int i = 0; i < expectedTokens.Length; i++)
             {
-                result = false;
-                if (throwable)
-                    throw new Exception("Expected '" + LexerUtils.GetTokenValueByType(expectedToken) + "' at " + curToken.Location.ToString());
+                if (expectedTokens[i] == curToken.TokenType)
+                {
+                    result = true;
+                    break;
+                }
             }
+
+            if (!result && throwable)
+                Error("Expected " + ParserUtils.GetExpectedTokenListAsString(expectedTokens) + " at " + curToken.Location.ToString());
+
             return result;
         }
 
@@ -144,7 +208,7 @@ namespace miniJ.Parsing
                 Next();
             }
             else
-                throw new Exception();
+                Error("Mais de um modificador de acesso para o mesmo objeto.");
         }
 
         private void ProcessCISE()
@@ -178,14 +242,42 @@ namespace miniJ.Parsing
             Class Classe = new Class(curToken.Value, curToken);
             Classe.AccessModifier = GetAccessModifier(AccessModifierEnum.Private);
             Next();
-            if (Expected_Token(TokenType.Delimiter_Collon, false))
+            if (Expected_Token(false, TokenType.Delimiter_Collon))
             {
                 while (curToken.TokenType != TokenType.Delimiter_OBlock)
                     Next();
             }
 
-            Expected_Token(TokenType.Delimiter_OBlock);
-            Next(); // {
+            currentNamespace.CISEs.Add(Classe.Name, Classe);
+            currentCISE = currentNamespace.CISEs[Classe.Name];
+
+            ProcessClassBody();
+        }
+
+        private void ProcessClassBody()
+        {
+            Next(); // class
+            Class Classe = new Class(curToken.Value, curToken);
+            Classe.AccessModifier = GetAccessModifier(AccessModifierEnum.Private);
+            Next();
+            if (Expected_Token(false, TokenType.Delimiter_Collon))
+            {
+                while (curToken.TokenType != TokenType.Delimiter_OBlock)
+                    Next();
+            }
+            currentNamespace.CISEs.Add(Classe.Name, Classe);
+            currentCISE = currentNamespace.CISEs[Classe.Name];
+            Classe.Namespace = currentNamespace;
+            Log("Added class: " + Classe.Name + " with '" + Classe.AccessModifier.ToString() + "' access in namespace '" + Classe.Namespace.ToString() + "'.");
+            ProcessClassBody();
+        }
+
+        private Variable ParseVariableDeclaration(Token name, Token type)
+        {
+            Variable variable = new Variable(name);
+            // variable.Type = new DataType(type.Value, DataType.SpecificTypeOfData.)
+
+            return variable;
         }
 
         private List<Token> ProcessDotExpr(TokenType delimiter, bool Identifier = false)
@@ -197,7 +289,7 @@ namespace miniJ.Parsing
                 {
                     if (Identifier && !ParserUtils.ValidIdentifier(curToken.Value))
                     {
-                        throw new Exception();
+                        Error("Identificador inválido!");
                     }
                     result.Add(curToken);
                 }
@@ -217,18 +309,14 @@ namespace miniJ.Parsing
         private void ProcessNamespace()
         {
             Next(); // namespace
-
             if (curToken.TokenType == TokenType.Delimiter_OBlock) // namespace com nome vazio
                 goto namespaceGlobal;
-
             List<Token> namespaceName = ProcessDotExpr(TokenType.Delimiter_OBlock);
             Namespace curGlobal = null;
-
             if (_openedBlocks != _closedBlock)
-                curGlobal = currentNamespace;
+                curGlobal = currentNamespace.Clone();
             else
                 curGlobal = Helpers.Global.GlobalNamespace.Clone();
-
             foreach (Token nameToken in namespaceName)
             {
                 if (curGlobal.Childs.Exists(n => n.Name == nameToken.Value))
@@ -247,21 +335,18 @@ namespace miniJ.Parsing
                     curGlobal = newN;
                 }
             }
-
             currentNamespace = curGlobal;
-
-            Log("Created namespace: " + ParserUtils.GetDotExpr(namespaceName));
-
+            Log("Created namespace: " + currentNamespace.ToString());
+        //  Log("Created namespace: " + ParserUtils.GetDotExpr(namespaceName));
         verificaNamespaceVazio:
             Next(); // {
             if (curToken.TokenType == TokenType.Delimiter_CBlock) // Namespace vazio
             {
-                throw new Exception("Cannot declare empthy namespaces!");
+                Error("Cannot declare empthy namespaces!");
             }
             return;
-
         namespaceGlobal: // o namespace foi declarado sem nome, ou seja, tudo dentro dele fará parte de 'global'
-            currentNamespace = Helpers.Global.GlobalNamespace;
+            currentNamespace = Helpers.Global.GlobalNamespace.Clone();
             goto verificaNamespaceVazio;
         }
 
@@ -275,6 +360,12 @@ namespace miniJ.Parsing
             List<Token> usingPath = ProcessDotExpr(TokenType.Delimiter_CInstruction, true);
             Log("Using at: " + currentNamespace.Name + " - Complete path: " + ParserUtils.GetDotExpr(usingPath));
             Next(); // ;
+        }
+
+        private void Error(string message)
+        {
+            Debug(true, "Error: " + message);
+            throw new Exception();
         }
     }
 }

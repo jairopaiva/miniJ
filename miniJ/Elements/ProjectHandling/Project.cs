@@ -4,12 +4,12 @@ using System.IO;
 
 namespace miniJ.Elements
 {
-    class File
+     class File
     {
         public string Name { get; set; }
     }
 
-    class Folder
+     class Folder
     {
         public Folder(string path)
         {
@@ -38,7 +38,7 @@ namespace miniJ.Elements
         }
     }
 
-    class Project
+     class Project
     {
         public Project()
         {
