@@ -3,9 +3,9 @@ using miniJ.Lexical.Elements.Token;
 
 namespace miniJ.Parsing.Elements
 {
-    class Interface : DataType
+    class Interface : CISE
     {
-        public Interface(string name, Token origin) : base(name, SpecificTypeOfData.Interface, origin)
+        public Interface(Token name, Token origin) : base(name, SpecificTypeOfCISE.Interface, origin)
         {
         }
     }

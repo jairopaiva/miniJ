@@ -1,41 +1,14 @@
 namespace namespace_1.Tey // Comentario namespace
 {
-
     public class SyntaxTests
     {
-	
-		public void Tet_Undeline(int[] arg){
-			
-			char newLine = '\n';
-			
-			if(arg[0] == 0 && arg[1] >= 1){
-				for(int i = 0; i != arg[1]; i++){
-					arg[1]+=i; // Comentario dentro de loop for
-				}
-			}
-			
-			bool boolTest = arg[0] >= 1;
-			if(!boolTest)
-				arg[0]=0x01;
-		}
-		
-		public int[] arrayDeInt = new int[]{0xff, 0x00000, 0x123, -123};
-		public float[] testFloat = new float[] {1.232151, 123.321};
-		public byte[] notInitialized;
-		
 	}
-}
- // Comentario EOF
- 
- namespace namespace_2.Shmily // Comentario namespace
-{}
-namespace namespace_3
-{}
-
-namespace // Comentario namespace
-{
-	public struct EstruturaGlobal
+	
+	namespace Bla.InsideTey
 	{
-		public int bla;
+		public class InsideTeyTest
+		{
+			public int[] constIntArray;
+		}
 	}
 }

@@ -4,6 +4,7 @@ using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing.Elements;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace miniJ.Parsing
 {
@@ -15,26 +16,401 @@ namespace miniJ.Parsing
     class PreProcessor : ICompilerNode
     {
         public readonly TokenReader Reader;
-
-        public Namespace currentNamespace;
-        public DataType currentCISE;
-        public Method currentMethod;
-
         public Token curToken;
 
         private int _closedBlock;
         private int _openedBlocks;
-        private object accessModifier;
+        private AccessModifierNode _accessModifier;
 
         public PreProcessor()
         {
             Reader = new TokenReader(Helpers.Global.lexerTokenCollection);
-            currentNamespace = Helpers.Global.GlobalNamespace;
             _openedBlocks = 0;
             _closedBlock = 0;
-            accessModifier = null;
-            currentCISE = null;
-            currentMethod = null;
+            _accessModifier = null;
+        }
+
+        public void Process(Namespace currentNamespace)
+        {
+            
+            curToken = Reader.Peek();
+            while (curToken.TokenType != TokenType.Delimiter_EOF)
+            {
+                if (curToken.TokenType == TokenType.Keyword_Namespace)
+                {
+                    ProcessNamespace(currentNamespace);
+                }
+                else if (curToken.IsToken(Token.ACCESS_MODIFIER))
+                {
+                    ProcessAccessModifier();
+                }
+                else if (ParserUtils.IsCISE(curToken))
+                {
+                    ProcessCISE(currentNamespace);
+                }
+                else if (curToken.TokenType == TokenType.Keyword_Using)
+                {
+                    ProcessUsing(currentNamespace);
+                }
+                else if (curToken.TokenType == TokenType.Delimiter_CBlock) // Namespace closing bracket
+                {
+                    NextToken();
+                    Log(currentNamespace.ToString(), LogInfo.Created);
+                }
+                else
+                {
+                    throw new Exception(curToken.ToString());
+                }
+            }
+
+          //  Log("Finish pre-processing, took: " + DateTime.Now.Subtract(started));
+        }
+
+        private void ProcessNamespace(Namespace currentNamespace)
+        {
+            NextToken(); // namespace
+
+            Namespace curGlobal = currentNamespace.Clone();
+
+            if (curToken.TokenType == TokenType.Delimiter_OBlock) // namespace com nome vazio
+                goto namespaceGlobal;
+            List<Token> namespaceName = ProcessDotExpr(TokenType.Delimiter_OBlock);
+
+            foreach (Token nameToken in namespaceName)
+            {
+                if (curGlobal.Childs.Exists(n => n.Name.Value == nameToken.Value))
+                {
+                    curGlobal = curGlobal.Childs.Find(n => n.Name.Value == nameToken.Value);
+                }
+                else
+                {
+                    Namespace newN = new Namespace(nameToken, curGlobal);
+                    if (curGlobal.Name == Helpers.Global.GlobalNamespace.Name)
+                    {
+                        Helpers.Global.GlobalNamespace.Childs.Add(newN);
+                    }
+                    else
+                        curGlobal.Childs.Add(newN);
+                    curGlobal = newN;
+                }
+            }
+
+            Log(curGlobal.ToString(), LogInfo.Detected);
+
+        verificaNamespaceVazio:
+
+            NextToken(); // {
+            if (curToken.TokenType == TokenType.Delimiter_CBlock) // Namespace vazio
+            {
+                Log("Cannot declare empthy namespaces!", LogInfo.Error);
+            }
+
+            Process(curGlobal);
+            return;
+
+        namespaceGlobal: // o namespace foi declarado sem nome, ou seja, tudo dentro dele fará parte de 'global'
+            curGlobal = Helpers.Global.GlobalNamespace.Clone();
+            goto verificaNamespaceVazio;
+        }
+
+        private void ProcessAccessModifier()
+        {
+            if (_accessModifier == null) // Esperado, caso contrário, algo deu errado previamente
+            {
+                _accessModifier = AccessModifierNode.Get(curToken);
+                NextToken();
+            }
+            else
+                Log("More than one access modifier for the same object.", LogInfo.Error);
+
+            Log( _accessModifier.ToString(), LogInfo.Detected);
+
+        }
+
+        private void ProcessCISE(Namespace currentNamespace)
+        {
+            switch (curToken.TokenType)
+            {
+                case TokenType.Keyword_Class:
+                    ProcessClass(currentNamespace);
+                    break;
+
+                case TokenType.Keyword_Interface:
+                    ProcessInterface();
+                    break;
+
+                case TokenType.Keyword_Struct:
+                    ProcessStruct();
+                    break;
+
+                case TokenType.Keyword_Enum:
+                    ProcessEnum();
+                    break;
+
+                default:
+                    throw new System.Exception();
+            }
+        }
+
+        private void ProcessUsing(Namespace currentNamespace)
+        {
+            NextToken(); // using
+
+            List<Token> usingPath = ProcessDotExpr(TokenType.Delimiter_CInstruction, true);
+            string formattedUsingPath = string.Join(".", usingPath.Select(token => token.Value));
+
+            if (!currentNamespace.CanImportNamespace(usingPath))
+            {
+                Log("Namespace cannot be found: " + formattedUsingPath, LogInfo.Error);
+            }
+
+            Log("Using at: " + currentNamespace.Name + " - Complete path: " +
+               ParserUtils.GetDotExpr(usingPath), LogInfo.Detected);
+
+            NextToken(); // ;
+        }
+
+        private void ProcessEnum()
+        {
+        }
+
+        private void ProcessInterface()
+        {
+        }
+
+        private void ProcessStruct()
+        {
+        }
+
+        private void ProcessClass(Namespace currentNamespace)
+        {
+            NextToken(); // class
+            Class Classe = new Class(curToken, curToken);
+            Classe.AccessModifier = GetAccessModifier(SpecificAccessModifier.Private);
+            NextToken();
+            if (Expected_Token(false, TokenType.Delimiter_Collon))
+            {
+                while (curToken.TokenType != TokenType.Delimiter_OBlock)
+                    NextToken();
+            }
+
+            currentNamespace.CISEs.Add(Classe.Name.Value, Classe);
+            Classe.Namespace = currentNamespace;
+
+            Log(Classe.ToString(), LogInfo.Detected);
+
+            ProcessClassBody(Classe);
+
+            Log(Classe.ToString(),  LogInfo.Created);
+            NextToken(); // }
+        }
+
+        private void ProcessClassBody(Class fromClass)
+        {
+            Log(fromClass.Name.Value + " body.", LogInfo.Processing);
+            Expected_Token(true, TokenType.Delimiter_OBlock);
+            NextToken(); // {
+
+            Token Const = null;
+
+            while (curToken.TokenType != TokenType.Delimiter_CBlock)
+            {
+                if (curToken.IsToken(Token.ACCESS_MODIFIER))
+                {
+                    ProcessAccessModifier();
+                }
+                else if (curToken.IsToken(Token.PRIMITIVE_TYPE) || curToken.TokenType == TokenType.NotDef_TypeIdentifier)
+                {
+                    DataType type = ParseDataType();
+                    Token name = curToken;
+                    NextToken();
+
+                    bool isConstant = Const != null;
+
+                    switch (curToken.TokenType)
+                    {
+                        case TokenType.Delimiter_OParenthesis:
+                            ParseMethod(name, type, fromClass);
+                            break;
+                        case TokenType.Operator_Equal: // Declarando uma variável
+                            ParseVariableDeclaration(name, type, false, true, isConstant);
+                            break;
+                        case TokenType.Delimiter_CInstruction:
+                            ParseVariableDeclaration(name, type, false, false, isConstant);
+                            break;
+                        default:
+                            throw new Exception();
+                    }
+                }
+                else if (curToken.TokenType == TokenType.Keyword_Constant)
+                {
+                    Const = curToken;
+                    NextToken();
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            Log(fromClass.Name + " body.", LogInfo.Created);
+        }
+
+        private DataType ParseDataType()
+        {
+            DataType dataType;
+            if (curToken.TokenType == TokenType.NotDef_TypeIdentifier)
+            {
+                dataType = new ObjectDataType(curToken)
+                {
+                    CISE = Helpers.Global.cisesDetectedInLexer.Find(cise => cise.Name.Value == curToken.Value)
+                };
+            }
+            else if (curToken.IsToken(Token.PRIMITIVE_TYPE))
+            {
+                dataType = PrimitiveDataType.GetPrimitiveType(curToken);
+            }
+            else
+                throw new Exception();
+
+            NextToken();
+
+            if (curToken.TokenType == TokenType.Delimiter_OIndex)
+            {
+
+                dataType.Settings = new DataType.DataTypeConfiguration() { Array = true };
+
+                NextToken();
+                Expected_Token(true, TokenType.Delimiter_CIndex);
+                NextToken();
+            }
+            return dataType;
+        }
+
+        private void ParseMethod(Token name, DataType type, CISE cise)
+        {
+            Method method = new Method(name, type, GetAccessModifier(SpecificAccessModifier.Private));
+            method.CISE = cise;
+            method.Parameters = ParseMethodParametrsDclr();
+            Expected_Token(true, TokenType.Delimiter_OBlock);
+            NextToken();
+
+            uint openBlocks = 1;
+
+            while (openBlocks != 0)
+            {
+                if (curToken.TokenType == TokenType.Delimiter_OBlock)
+                {
+                    openBlocks++;
+                }
+                if (curToken.TokenType == TokenType.Delimiter_CBlock)
+                {
+                    openBlocks--;
+                }
+                NextToken();
+            }
+
+            Log(method.ToString(), LogInfo.Created);
+
+        }
+
+        private Variable ParseVariableDeclaration(Token Name, DataType dataType,
+            bool insideMethod, bool Assigned, bool Constant)
+        {
+            Variable variable;
+
+            if (!insideMethod) // Se estiver fora de um método, consiste em um Field
+            {
+                variable = new Field(dataType.Origin)
+                {
+                    AccessModifier = GetAccessModifier(SpecificAccessModifier.Private)
+                };
+            }
+            else // Caso contrário, uma variável normal
+            {
+                variable = new Variable(dataType.Origin);
+            }
+
+            variable.Type = dataType;
+            variable.Name = Name;
+            variable.Constant = Constant;
+
+            if (Assigned)
+            {
+                // variable.Value = ParseAsssignExpr();
+                while (curToken.TokenType != TokenType.Delimiter_CInstruction)
+                {
+                    NextToken();
+                }
+                NextToken();
+            }
+            else
+            {
+                if(Constant) // Uma constante necessita ser assinalada ao ser declarada
+                {
+                    Log("A constant needs to be flagged when it is declared.", LogInfo.Error);
+                }
+
+                Expected_Token(true, TokenType.Delimiter_CInstruction);
+                NextToken();
+            }
+
+            Log(variable.ToString(), LogInfo.Created);
+
+            return variable;
+        }
+
+        private List<ParameterDeclaration> ParseMethodParametrsDclr(Method curMethod = null)
+        {
+            NextToken(); // (
+            List<ParameterDeclaration> parameters = new List<ParameterDeclaration>();
+
+            while (curToken.TokenType != TokenType.Delimiter_CParenthesis)
+            {
+                parameters.Add(ParseParameterDeclaration());
+            }
+
+            NextToken();
+
+            return parameters;
+        }
+
+        private ParameterDeclaration ParseParameterDeclaration()
+        {
+            if (!Expected_Token(false, TokenType.NotDef_TypeIdentifier) && !curToken.IsToken(Token.PRIMITIVE_TYPE))
+            {
+                throw new Exception();
+            }
+
+            DataType dataType = ParseDataType();
+
+            ParameterDeclaration parameter = new ParameterDeclaration(curToken);
+            parameter.Type = dataType;
+            parameter.Name = curToken;
+
+            NextToken();
+
+            switch (curToken.TokenType)
+            {
+                case TokenType.Operator_Equal:
+                    parameter.Value = ParseAsssignExpr();
+                    break;
+                case TokenType.Delimiter_Comma:
+                    NextToken();
+                    break;
+                case TokenType.Delimiter_CParenthesis:
+                    break;
+                default:
+                    throw new Exception();
+            }
+
+            return parameter; ;
+        }
+
+        private Expression ParseAsssignExpr()
+        {
+            Expected_Token(true, TokenType.Operator_Equal);
+            NextToken(); // =
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -43,113 +419,49 @@ namespace miniJ.Parsing
         /// </summary>
         /// <param name="defaultAccessModifier">Modificador de acesso padrão caso não o tenha</param>
         /// <returns>Modificador de acesso</returns>
-        public AccessModifierEnum GetAccessModifier(AccessModifierEnum defaultAccessModifier)
+        public AccessModifierNode GetAccessModifier(SpecificAccessModifier defaultAccessModifier)
         {
-            if (accessModifier != null)
+            if (_accessModifier != null)
             {
-                if (accessModifier.GetType() == typeof(Token))
-                {
-                    AccessModifierEnum result = ParserUtils.GetAccessModifier((accessModifier as Token).TokenType);
-                    accessModifier = null;
-                    return result;
-                }
-                else
-                    Error("GetAccessModifier");
+                AccessModifierNode result = _accessModifier;
+                _accessModifier = null;
+                return result;
             }
-
-            return defaultAccessModifier;
+            return AccessModifierNode.Get(curToken, defaultAccessModifier);
         }
 
-        public void Process()
+        private void NextToken()
         {
+            Reader.Read();
             curToken = Reader.Peek();
-            while (curToken.TokenType != TokenType.Delimiter_EOF)
-            {
-                if (curToken.TokenType == TokenType.Keyword_Namespace)
-                {
-                    ProcessNamespace();
-                }
-                else if (curToken.IsToken(Token.ACCESS_MODIFIER))
-                {
-                    ProcessAccessModifier();
-                }
-                else if (ParserUtils.IsCISE(curToken))
-                {
-                    ProcessCISE();
-                }
-                else if (curToken.TokenType == TokenType.Keyword_Using)
-                {
-                    ProcessUsing();
-                }
-                else
-                {
-                    Error("");
-                }
-            }
-        }
-
-        private AssignmentExpression ParseAssignmentExpr()
-        {
-            return null;
-        }
-
-        private void ParseMethod(Token name, Token type)
-        {
-            switch (currentCISE.SpecificType)
-            {
-            }
-        }
-
-        private void ParseMethodParametrsDclr(Token name, Token type, Method curMethod = null)
-        {
-            Next(); // (
-            List<ParameterDeclaration> parameters = new List<ParameterDeclaration>();
-            if (curMethod == null)
-            {
-                curMethod = currentMethod;
-            }
-            {
-                Expected_Token(false, TokenType.NotDef_TypeIdentifier);
-            }
-            Next();
             switch (curToken.TokenType)
             {
                 case TokenType.Delimiter_OBlock:
-                    if (curMethod.CISE.SpecificType == DataType.SpecificTypeOfData.Interface)
-                    {
-                        Error("Can't declare method body in an interface!");
-                    }
+                    _openedBlocks++;
                     break;
 
-                default:
-                    if (curMethod.CISE.SpecificType == DataType.SpecificTypeOfData.Interface)
-                    {
-                        Expected_Token(true, TokenType.Delimiter_CInstruction);
-                    }
-                    else
-                    {
-                        Expected_Token(true, TokenType.Delimiter_CInstruction);
-                    }
+                case TokenType.Delimiter_CBlock:
+                    _closedBlock++;
                     break;
             }
-            curMethod.Parameters = parameters;
         }
 
-        private Variable ParseVariableDeclaration(bool methodReturn = false, bool parameterDclr = false)
+        private List<Token> ProcessDotExpr(TokenType delimiter, bool Identifier = false)
         {
-            Expected_Token(true, TokenType.NotDef_TypeIdentifier);
-            Token type = curToken;
-            return null;
-        }
-
-        private void Debug(bool readKey = false, string text = "", Token token = null)
-        {
-            if (token != null)
-                Console.WriteLine(text + token.ToString());
-            else
-                Console.WriteLine(text + curToken.ToString());
-            if (readKey)
-                Console.ReadKey();
+            List<Token> result = new List<Token>();
+            while (curToken.TokenType != delimiter)
+            {
+                if (curToken.TokenType != TokenType.Delimiter_Dot)
+                {
+                    if (Identifier && !ParserUtils.ValidIdentifier(curToken.Value))
+                    {
+                        Log("Invalid identifier!", LogInfo.Error);
+                    }
+                    result.Add(curToken);
+                }
+                NextToken();
+            }
+            return result;
         }
 
         /// <summary>
@@ -172,200 +484,65 @@ namespace miniJ.Parsing
             }
 
             if (!result && throwable)
-                Error("Expected " + ParserUtils.GetExpectedTokenListAsString(expectedTokens) + " at " + curToken.Location.ToString());
+                Log("Expected " + ParserUtils.GetExpectedTokenListAsString(expectedTokens) , LogInfo.Error);
 
             return result;
         }
 
-        private void Log(string info, bool readKey = false)
+        private void Debug(bool readKey = true, string text = "", Token token = null)
         {
-            Console.WriteLine(info);
+            if (token != null)
+                Console.WriteLine(text + token.ToString());
+            else
+                Console.WriteLine(text + curToken.ToString());
             if (readKey)
                 Console.ReadKey();
         }
 
-        private void Next()
+        private void Log(string message, LogInfo typeOfLog)
         {
-            Reader.Read();
-            curToken = Reader.Peek();
-            switch (curToken.TokenType)
+            string msg = string.Empty;
+            bool error = false;
+            
+            switch (typeOfLog)
             {
-                case TokenType.Delimiter_OBlock:
-                    _openedBlocks++;
+                case LogInfo.Created:
+                    msg = "Created: ";
                     break;
-
-                case TokenType.Delimiter_CBlock:
-                    _closedBlock++;
+                case LogInfo.Processing:
+                    msg = "Processing: ";
                     break;
-            }
-        }
-
-        private void ProcessAccessModifier()
-        {
-            if (accessModifier == null) // Esperado, caso contrário, algo deu errado previamente
-            {
-                accessModifier = curToken;
-                Next();
-            }
-            else
-                Error("Mais de um modificador de acesso para o mesmo objeto.");
-        }
-
-        private void ProcessCISE()
-        {
-            switch (curToken.TokenType)
-            {
-                case TokenType.Keyword_Class:
-                    ProcessClass();
+                case LogInfo.Detected:
+                    msg = "Detected: ";
                     break;
-
-                case TokenType.Keyword_Interface:
-                    ProcessInterface();
+                case LogInfo.Error:
+                    error = true;
+                    msg = "Error: ";
                     break;
-
-                case TokenType.Keyword_Struct:
-                    ProcessStruct();
+                case LogInfo.Info:
+                    error = true;
+                    msg = "Info: ";
                     break;
-
-                case TokenType.Keyword_Enum:
-                    ProcessEnum();
-                    break;
-
                 default:
-                    throw new System.Exception();
+                    break;
             }
+            
+
+            msg += message;
+            Helpers.Global.Logger.Log(msg, this);
+
+            if (error)
+                throw new Exception(msg + Environment.NewLine + curToken.ToString());
         }
 
-        private void ProcessClass()
+        private enum LogInfo
         {
-            Next(); // class
-            Class Classe = new Class(curToken.Value, curToken);
-            Classe.AccessModifier = GetAccessModifier(AccessModifierEnum.Private);
-            Next();
-            if (Expected_Token(false, TokenType.Delimiter_Collon))
-            {
-                while (curToken.TokenType != TokenType.Delimiter_OBlock)
-                    Next();
-            }
-
-            currentNamespace.CISEs.Add(Classe.Name, Classe);
-            currentCISE = currentNamespace.CISEs[Classe.Name];
-
-            ProcessClassBody();
+            Created,
+            Processing,
+            Detected,
+            Error,
+            Info
         }
 
-        private void ProcessClassBody()
-        {
-            Next(); // class
-            Class Classe = new Class(curToken.Value, curToken);
-            Classe.AccessModifier = GetAccessModifier(AccessModifierEnum.Private);
-            Next();
-            if (Expected_Token(false, TokenType.Delimiter_Collon))
-            {
-                while (curToken.TokenType != TokenType.Delimiter_OBlock)
-                    Next();
-            }
-            currentNamespace.CISEs.Add(Classe.Name, Classe);
-            currentCISE = currentNamespace.CISEs[Classe.Name];
-            Classe.Namespace = currentNamespace;
-            Log("Added class: " + Classe.Name + " with '" + Classe.AccessModifier.ToString() + "' access in namespace '" + Classe.Namespace.ToString() + "'.");
-            ProcessClassBody();
-        }
-
-        private Variable ParseVariableDeclaration(Token name, Token type)
-        {
-            Variable variable = new Variable(name);
-            // variable.Type = new DataType(type.Value, DataType.SpecificTypeOfData.)
-
-            return variable;
-        }
-
-        private List<Token> ProcessDotExpr(TokenType delimiter, bool Identifier = false)
-        {
-            List<Token> result = new List<Token>();
-            while (curToken.TokenType != delimiter)
-            {
-                if (curToken.TokenType != TokenType.Delimiter_Dot)
-                {
-                    if (Identifier && !ParserUtils.ValidIdentifier(curToken.Value))
-                    {
-                        Error("Identificador inválido!");
-                    }
-                    result.Add(curToken);
-                }
-                Next();
-            }
-            return result;
-        }
-
-        private void ProcessEnum()
-        {
-        }
-
-        private void ProcessInterface()
-        {
-        }
-
-        private void ProcessNamespace()
-        {
-            Next(); // namespace
-            if (curToken.TokenType == TokenType.Delimiter_OBlock) // namespace com nome vazio
-                goto namespaceGlobal;
-            List<Token> namespaceName = ProcessDotExpr(TokenType.Delimiter_OBlock);
-            Namespace curGlobal = null;
-            if (_openedBlocks != _closedBlock)
-                curGlobal = currentNamespace.Clone();
-            else
-                curGlobal = Helpers.Global.GlobalNamespace.Clone();
-            foreach (Token nameToken in namespaceName)
-            {
-                if (curGlobal.Childs.Exists(n => n.Name == nameToken.Value))
-                {
-                    curGlobal = curGlobal.Childs.Find(n => n.Name == nameToken.Value);
-                }
-                else
-                {
-                    Namespace newN = new Namespace(nameToken, curGlobal);
-                    if (curGlobal.Name == Helpers.Global.GlobalNamespace.Name)
-                    {
-                        Helpers.Global.GlobalNamespace.Childs.Add(newN);
-                    }
-                    else
-                        curGlobal.Childs.Add(newN);
-                    curGlobal = newN;
-                }
-            }
-            currentNamespace = curGlobal;
-            Log("Created namespace: " + currentNamespace.ToString());
-        //  Log("Created namespace: " + ParserUtils.GetDotExpr(namespaceName));
-        verificaNamespaceVazio:
-            Next(); // {
-            if (curToken.TokenType == TokenType.Delimiter_CBlock) // Namespace vazio
-            {
-                Error("Cannot declare empthy namespaces!");
-            }
-            return;
-        namespaceGlobal: // o namespace foi declarado sem nome, ou seja, tudo dentro dele fará parte de 'global'
-            currentNamespace = Helpers.Global.GlobalNamespace.Clone();
-            goto verificaNamespaceVazio;
-        }
-
-        private void ProcessStruct()
-        {
-        }
-
-        private void ProcessUsing()
-        {
-            Next(); // using
-            List<Token> usingPath = ProcessDotExpr(TokenType.Delimiter_CInstruction, true);
-            Log("Using at: " + currentNamespace.Name + " - Complete path: " + ParserUtils.GetDotExpr(usingPath));
-            Next(); // ;
-        }
-
-        private void Error(string message)
-        {
-            Debug(true, "Error: " + message);
-            throw new Exception();
-        }
     }
 }

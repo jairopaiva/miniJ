@@ -24,7 +24,7 @@ namespace miniJ.Parsing.Elements
             }
         }
 
-        public Token Next()
+        public Token ReadTemp()
         {
             return Tokens[tempPos++];
         }

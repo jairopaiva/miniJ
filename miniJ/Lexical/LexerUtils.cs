@@ -13,7 +13,14 @@ namespace miniJ.Lexical
 
         public static string GetTokenValueByType(TokenType tokenType)
         {
-            return Global.tokenDatabase.FirstOrDefault(token => token.Value.TokenType == tokenType).Value.Value;
+            try
+            {
+                return Global.tokenDatabase.FirstOrDefault(token => token.Value.TokenType == tokenType).Value.Value;
+            }
+            catch (System.Exception)
+            {
+                return tokenType.ToString();
+            }
         }
 
         public static bool HexChar(char c)

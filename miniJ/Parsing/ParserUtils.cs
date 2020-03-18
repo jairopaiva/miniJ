@@ -9,28 +9,30 @@ using System.Text;
 namespace miniJ.Parsing
 {
     class ParserUtils
-    {
-        public static AccessModifierEnum GetAccessModifier(TokenType tokenType)
+    {/*
+        public static AccessModifierNode GetAccessModifier(TokenType tokenType)
         {
             switch (tokenType)
             {
                 case TokenType.AccessModifier_Private:
-                    return AccessModifierEnum.Private;
+                    return AccessModifierNode.Private;
 
                 case TokenType.AccessModifier_Protected:
-                    return AccessModifierEnum.Protected;
+                    return AccessModifierNode.Protected;
 
                 case TokenType.AccessModifier_Public:
-                    return AccessModifierEnum.Public;
+                    return AccessModifierNode.Public;
 
                 default:
                     throw new Exception();
             }
         }
-
+        */
         public static string GetExpectedTokenListAsString(TokenType[] list)
         {
-            StringBuilder builder = new StringBuilder('[');
+            StringBuilder builder = new StringBuilder();
+            builder.Append('[');
+
             for (int i = 0; i < list.Length; i++)
             {
                 string tokenValue = LexerUtils.GetTokenValueByType(list[i]);
@@ -67,10 +69,33 @@ namespace miniJ.Parsing
 
         public static bool IsCISE(Token token)
         {
-            return token.TokenType == TokenType.Keyword_Class ||
-                token.TokenType == TokenType.Keyword_Interface ||
-                token.TokenType == TokenType.Keyword_Struct ||
-                token.TokenType == TokenType.Keyword_Enum;
+            switch (token.TokenType)
+            {
+                case TokenType.Keyword_Class:
+                case TokenType.Keyword_Interface:
+                case TokenType.Keyword_Struct:
+                case TokenType.Keyword_Enum:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public static CISE.SpecificTypeOfCISE GetCISEType(Token token)
+        {
+            switch (token.TokenType)
+            {
+                case TokenType.Keyword_Class:
+                    return CISE.SpecificTypeOfCISE.Class;
+                case TokenType.Keyword_Interface:
+                    return CISE.SpecificTypeOfCISE.Interface;
+                case TokenType.Keyword_Struct:
+                    return CISE.SpecificTypeOfCISE.Struct;
+                case TokenType.Keyword_Enum:
+                    return CISE.SpecificTypeOfCISE.Enum;
+                default:
+                    throw new Exception();
+            }
         }
 
         public static bool ValidIdentifier(string ID)

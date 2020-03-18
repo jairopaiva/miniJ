@@ -3,6 +3,7 @@ using miniJ.Grammar;
 using miniJ.Lexical;
 using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing;
+using miniJ.Parsing.Elements;
 using System;
 using System.Collections.Generic;
 
@@ -13,7 +14,7 @@ namespace miniJ.Helpers
         public static Namespace GlobalNamespace;
         public static Lexer Lexer;
         public static List<Token> lexerTokenCollection;
-        public static List<Token> cisesDetectedInLexer;
+        public static List<CISE> cisesDetectedInLexer;
         public static Logger Logger;
         public static PreProcessor PreProcessor;
         public static Project Project;
@@ -23,7 +24,7 @@ namespace miniJ.Helpers
         {
             LexicalProcess();
             //  Logger.AppendToFile();
-            PreProcessor.Process();
+            PreProcessor.Process(Helpers.Global.GlobalNamespace);
         }
 
         public static void LexicalProcess()
@@ -54,7 +55,7 @@ namespace miniJ.Helpers
 
         private static void SetUpLexer()
         {
-            cisesDetectedInLexer = new List<Token>();
+            cisesDetectedInLexer = new List<CISE>();
             lexerTokenCollection = new List<Token>();
             Lexer = new Lexer();
         }
@@ -169,15 +170,15 @@ namespace miniJ.Helpers
                 { Operators.Sub.Value, Operators.Sub },
                 { Operators.SubAssign.Value, Operators.SubAssign },
 
-                { Types.Bool.Value, Types.Bool },
-                { Types.Byte.Value, Types.Byte },
-                { Types.Char.Value, Types.Char },
-                { Types.Double.Value, Types.Double },
-                { Types.Float.Value, Types.Float },
-                { Types.Int.Value, Types.Int },
-                { Types.Long.Value, Types.Long },
-                { Types.String.Value, Types.String },
-                { Types.Void.Value, Types.Void },
+                { BuiltInTypes.Bool.Value, BuiltInTypes.Bool },
+                { BuiltInTypes.Byte.Value, BuiltInTypes.Byte },
+                { BuiltInTypes.Char.Value, BuiltInTypes.Char },
+                { BuiltInTypes.Double.Value, BuiltInTypes.Double },
+                { BuiltInTypes.Float.Value, BuiltInTypes.Float },
+                { BuiltInTypes.Int.Value, BuiltInTypes.Int },
+                { BuiltInTypes.Long.Value, BuiltInTypes.Long },
+                { BuiltInTypes.String.Value, BuiltInTypes.String },
+                { BuiltInTypes.Void.Value, BuiltInTypes.Void },
             };
         }
     }

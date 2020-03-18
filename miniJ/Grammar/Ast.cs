@@ -110,7 +110,7 @@ namespace miniJ.Grammar
         public static readonly Token SubAssign = new Token("-=") { TokenType = TokenType.Operator_SubAssign };
     }
 
-     class Types
+     class BuiltInTypes
     {
         public static readonly Token Bool = new Token("bool") { TokenType = TokenType.PrimitiveType_Bool };
         public static readonly Token Byte = new Token("byte") { TokenType = TokenType.PrimitiveType_Byte };

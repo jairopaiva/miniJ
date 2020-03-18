@@ -1,32 +1,33 @@
 ﻿using miniJ.Elements.Base;
 using miniJ.Lexical.Elements.Token;
-using miniJ.Parsing;
-using miniJ.Parsing.Elements;
+using System;
 using System.Collections.Generic;
+using System.Text;
 
-namespace miniJ.Elements
+namespace miniJ.Parsing.Elements
 {
     class DataType : ISyntaxNode
     {
-        public DataType(string name, SpecificTypeOfData type, Token origin) : base(origin)
-        {
-            if (ParserUtils.ValidIdentifier(name))
-                Name = name;
-            SpecificType = type;
-            Variables = new List<Variable>();
-        }
-
-        public enum SpecificTypeOfData
-        {
-            Class,
-            Interface,
-            Struct,
-            Enum,
-            PrimitiveType
-        }
-
         public string Name { get; set; }
-        public SpecificTypeOfData SpecificType { get; set; }
-        public List<Variable> Variables { get; set; }
+        public DataTypeConfiguration Settings { get; set; }
+        public DataType(Token origin) : base(origin)
+        {
+            Name = origin.Value;
+        }
+
+        public struct DataTypeConfiguration
+        {
+            public bool Array { get; set; }
+            public bool Static { get; set; }
+        }
+
+        public override string ToString()
+        {
+            StringBuilder info = new StringBuilder();
+            if (Settings.Array)
+                info.Append("Array of ");
+            info.Append(Name);
+            return info.ToString();
+        }
     }
 }

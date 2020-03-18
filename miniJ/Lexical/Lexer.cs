@@ -4,6 +4,7 @@ using miniJ.Helpers;
 using miniJ.Lexical.Elements;
 using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing;
+using miniJ.Parsing.Elements;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -30,6 +31,7 @@ namespace miniJ.Lexical
         public string CurrentSourceCode { get; set; }
         public StringReader Reader { get; set; }
         private bool _nextTokenCISEIdentifier;
+        private CISE.SpecificTypeOfCISE _nextTokenCISEType;
 
         public List<Token> Scan(string filePath)
         {
@@ -103,6 +105,7 @@ namespace miniJ.Lexical
                 if (ParserUtils.IsCISE(token))
                 {
                     _nextTokenCISEIdentifier = true;
+                    _nextTokenCISEType = ParserUtils.GetCISEType(token);
                 }
             }
             else
@@ -114,7 +117,8 @@ namespace miniJ.Lexical
                     else
                     {
                         token.TokenType = TokenType.NotDef_TypeIdentifier;
-                        Helpers.Global.cisesDetectedInLexer.Add(token);
+                        CISE cise = new CISE(token, _nextTokenCISEType, token);
+                        Helpers.Global.cisesDetectedInLexer.Add(cise);
                         _nextTokenCISEIdentifier = false;
                     }
                 }
