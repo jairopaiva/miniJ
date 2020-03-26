@@ -13,9 +13,9 @@
             Column = 1;
         }
 
-        public int Column { get; set; }
-        public int Line { get; set; }
-        public int Position { get; set; }
+        public int Column;
+        public int Line;
+        public int Position;
 
         public int this[int Index]
         {

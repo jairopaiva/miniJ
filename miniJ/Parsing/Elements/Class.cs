@@ -11,9 +11,9 @@ namespace miniJ.Elements
             Implements = new List<Interface>();
         }
 
-        public Body Body { get; set; }
-        public Class Extends { get; set; }
-        public List<Interface> Implements { get; set; }
+        public Body Body;
+        public Class Extends;
+        public List<Interface> Implements;
 
     }
 }

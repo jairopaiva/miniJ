@@ -29,8 +29,8 @@
             Executable
         }
 
-        public Architecture TargetArchitecture { get; set; }
-        public ExecutableFormat TargetExecutableFormat { get; set; }
-        public OutputType TargetOutputType { get; set; }
+        public Architecture TargetArchitecture;
+        public ExecutableFormat TargetExecutableFormat;
+        public OutputType TargetOutputType;
     }
 }

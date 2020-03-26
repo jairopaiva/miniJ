@@ -6,7 +6,7 @@ namespace miniJ.Elements
 {
      class File
     {
-        public string Name { get; set; }
+        public string Name;
     }
 
      class Folder
@@ -22,8 +22,8 @@ namespace miniJ.Elements
             }
         }
 
-        public List<File> Files { get; set; }
-        public string Path { get; set; }
+        public List<File> Files;
+        public string Path;
 
         public static Folder Open(string path)
         {
@@ -44,8 +44,8 @@ namespace miniJ.Elements
         {
         }
 
-        public List<Folder> Folders { get; set; }
-        public string Name { get; set; }
-        public ProjectTarget ProjectTarget { get; set; }
+        public List<Folder> Folders;
+        public string Name;
+        public ProjectTarget ProjectTarget;
     }
 }

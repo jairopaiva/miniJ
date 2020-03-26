@@ -1,6 +1,5 @@
 ﻿using miniJ.Elements.Base;
 using miniJ.Grammar;
-using miniJ.Helpers;
 using miniJ.Lexical.Elements;
 using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing;
@@ -11,6 +10,7 @@ using System.Text;
 
 namespace miniJ.Lexical
 {
+
     /// <summary> https://pt.wikipedia.org/wiki/An%C3%A1lise_l%C3%A9xica
     /// Análise léxica é o processo de analisar a entrada de linhas de caracteres (tal como o código-fonte de um programa
     /// de computador) e produzir uma sequência de símbolos chamado "símbolos léxicos" (lexical tokens), ou somente
@@ -18,28 +18,32 @@ namespace miniJ.Lexical
     /// </summary>
     class Lexer : ICompilerNode
     {
-        private readonly Dictionary<string, Token> tokenDatabase;
-
-        public Lexer()
+        private readonly Dictionary<string, Token> _tokenDatabase;
+        public Lexer(Dictionary<string, Token> tokenDatabase)
         {
-            tokenDatabase = Global.tokenDatabase;
+            _tokenDatabase = tokenDatabase;
+            lexerResult = new LexerResult();
         }
 
         // Para cada arquivo processado, estas variáveis são 'resetadas'
-        public string CurrentFile { get; set; }
-
-        public string CurrentSourceCode { get; set; }
-        public StringReader Reader { get; set; }
-        private bool _nextTokenCISEIdentifier;
+        
         private CISE.SpecificTypeOfCISE _nextTokenCISEType;
+        public StringReader Reader;
+        private bool _nextTokenCISEIdentifier;
+        private string _currentSourceCode;
+        private LexerResult lexerResult;
+        private string _currentFile;
+        
+        
 
-        public List<Token> Scan(string filePath)
+        public LexerResult Scan(string filePath)
         {
-            CurrentSourceCode = System.IO.File.ReadAllText(filePath);
-            Reader = new StringReader(CurrentSourceCode);
-            List<Token> Tokens = new List<Token>();
-            CurrentFile = filePath;
+            _currentSourceCode = System.IO.File.ReadAllText(filePath);
+            Reader = new StringReader(_currentSourceCode);
+            List<Token> tokens = new List<Token>();
             _nextTokenCISEIdentifier = false;
+            lexerResult = new LexerResult();
+            _currentFile = filePath;
 
             while (Reader.Peek() != -1)
             {
@@ -56,32 +60,32 @@ namespace miniJ.Lexical
                 }
                 else if (char.IsLetter(curChar))
                 {
-                    ParseLetter(ref Tokens);
+                    ParseLetter(ref tokens);
                 }
                 else if (char.IsDigit(curChar))
                 {
-                    ParseNumber(ref Tokens);
+                    ParseNumber(ref tokens);
                 }
                 else if (curChar == Directives.Define.Value[0])
                 {
-                    ParseDirective(ref Tokens);
+                    ParseDirective(ref tokens);
                 }
                 else if (LexerUtils.IsOperatorOrComparator(curChar.ToString()))
                 {
-                    ParseSymbolOrOperator(ref Tokens);
+                    ParseSymbolOrOperator(ref tokens);
                 }
                 else if (curChar == Delimiters.CharAssigment.Value[0])
                 {
-                    ParseCharAssigment(ref Tokens);
+                    ParseCharAssigment(ref tokens);
                 }
                 else if (curChar == Delimiters.StringAssigment.Value[0])
                 {
-                    ParseStringAssigment(ref Tokens);
+                    ParseStringAssigment(ref tokens);
                 }
                 else
                     try
                     {
-                        AddToken(curChar.ToString(), Reader.Column, ref Tokens);
+                        AddToken(curChar.ToString(), Reader.Column, ref tokens);
                         Reader.Read();
                     }
                     catch (Exception)
@@ -90,17 +94,18 @@ namespace miniJ.Lexical
                     }
             }
 
-            return Tokens;
+            lexerResult.lexerTokenCollection.AddRange(tokens);
+            return lexerResult;
         }
 
         private void AddToken(string Value, int startPos, ref List<Token> tokens, TokenType specificTokenType = TokenType.NotDef_None)
         {
-            NodeLocation location = new NodeLocation() { Column = startPos, Line = Reader.Line, File = CurrentFile };
+            NodeLocation location = new NodeLocation() { Column = startPos, Line = Reader.Line, File = _currentFile };
             Token token = new Token(Value) { Location = location, TokenType = specificTokenType }; ;
 
-            if (tokenDatabase.ContainsKey(Value))
+            if (_tokenDatabase.ContainsKey(Value))
             {
-                token.TokenType = tokenDatabase[Value].TokenType;
+                token.TokenType = _tokenDatabase[Value].TokenType;
 
                 if (ParserUtils.IsCISE(token))
                 {
@@ -118,7 +123,7 @@ namespace miniJ.Lexical
                     {
                         token.TokenType = TokenType.NotDef_TypeIdentifier;
                         CISE cise = new CISE(token, _nextTokenCISEType, token);
-                        Helpers.Global.cisesDetectedInLexer.Add(cise);
+                        lexerResult.cisesDetectedInLexer.Add(cise);
                         _nextTokenCISEIdentifier = false;
                     }
                 }
@@ -335,6 +340,19 @@ namespace miniJ.Lexical
             }
 
             AddToken(builder.ToString(), start, ref tokens);
+        }
+
+    }
+
+    class LexerResult
+    {
+        public List<Token> lexerTokenCollection;
+        public List<CISE> cisesDetectedInLexer;
+
+        public LexerResult()
+        {
+            lexerTokenCollection = new List<Token>();
+            cisesDetectedInLexer = new List<CISE>();
         }
     }
 }

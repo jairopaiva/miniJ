@@ -10,7 +10,7 @@ namespace miniJ.Parsing.Elements
     /// </summary>
     class Field : Variable
     {
-        public AccessModifierNode AccessModifier { get; set; }
+        public AccessModifierNode AccessModifier;
         public Field(Token origin) : base(origin)
         {
         }

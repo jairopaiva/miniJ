@@ -1,9 +1,9 @@
 ﻿using miniJ.Elements;
+using miniJ.Elements.Base;
 using miniJ.Grammar;
 using miniJ.Lexical;
 using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing;
-using miniJ.Parsing.Elements;
 using System;
 using System.Collections.Generic;
 
@@ -13,29 +13,49 @@ namespace miniJ.Helpers
     {
         public static Namespace GlobalNamespace;
         public static Lexer Lexer;
-        public static List<Token> lexerTokenCollection;
-        public static List<CISE> cisesDetectedInLexer;
         public static Logger Logger;
         public static PreProcessor PreProcessor;
         public static Project Project;
         public static Dictionary<string, Token> tokenDatabase;   // Dicionário contendo os tokens padrões da linguagem
 
+        public static LexerResult lexerResult;
         public static void Compile()
         {
             LexicalProcess();
-            //  Logger.AppendToFile();
-            PreProcessor.Process(Helpers.Global.GlobalNamespace);
+            List<CodeError> detectedErrors = PreProcessor.Start(lexerResult, GlobalNamespace);
+            Logger.Log("", PreProcessor);
+
+            if (detectedErrors.Count != 0)
+            {
+                Logger.Log("Finished pre-processing with errors:", PreProcessor);
+                foreach (CodeError error in detectedErrors)
+                {
+                    string formattedError = error.Error + " At: " + error.ErrorToken.ToString(); 
+                    Logger.Log(formattedError, PreProcessor);
+                }
+            }
+            else
+            {
+                Logger.Log("Finished pre-processing without errors!", PreProcessor);
+            }
+
+            Logger.Log("", PreProcessor);
         }
 
         public static void LexicalProcess()
         {
+            lexerResult = new LexerResult();
             foreach (Folder folder in Project.Folders)
             {
                 foreach (File file in folder.Files)
-                    lexerTokenCollection.AddRange(Lexer.Scan(folder.Path + file.Name));
+                {
+                    LexerResult scanResult = Lexer.Scan(folder.Path + file.Name);
+                    lexerResult.lexerTokenCollection.AddRange(scanResult.lexerTokenCollection);
+                    lexerResult.cisesDetectedInLexer.AddRange(scanResult.cisesDetectedInLexer);
+                }
             }
-            lexerTokenCollection.Add(
-                Delimiters.EOF.Copy(lexerTokenCollection[lexerTokenCollection.Count - 1].Location));
+            Token lastLexerToken = lexerResult.lexerTokenCollection[lexerResult.lexerTokenCollection.Count - 1];
+            lexerResult.lexerTokenCollection.Add(Delimiters.EOF.Copy(lastLexerToken.Location));
         }
 
         public static void Reset()
@@ -50,14 +70,15 @@ namespace miniJ.Helpers
 
         private static void SetUpGlobalNamespace()
         {
-            GlobalNamespace = new Namespace(Keywords.Global, null);
+            GlobalNamespace = new Namespace(Keywords.Global, null)
+            {
+                Name = Keywords.Global.Value
+            };
         }
 
         private static void SetUpLexer()
         {
-            cisesDetectedInLexer = new List<CISE>();
-            lexerTokenCollection = new List<Token>();
-            Lexer = new Lexer();
+            Lexer = new Lexer(tokenDatabase);
         }
 
         private static void SetUpLogger()
@@ -90,6 +111,7 @@ namespace miniJ.Helpers
                 { AccessModifier.Private.Value, AccessModifier.Private },
                 { AccessModifier.Protected.Value, AccessModifier.Protected },
                 { AccessModifier.Public.Value, AccessModifier.Public },
+
                 { Comparators.And.Value, Comparators.And },
                 { Comparators.Different.Value, Comparators.Different },
                 { Comparators.Equal.Value, Comparators.Equal },
@@ -144,16 +166,16 @@ namespace miniJ.Helpers
                 { Keywords.Namespace.Value, Keywords.Namespace },
                 { Keywords.New.Value, Keywords.New },
                 { Keywords.Null.Value, Keywords.Null },
+                { Keywords.Override.Value, Keywords.Override },
                 { Keywords.Readonly.Value, Keywords.Readonly },
                 { Keywords.Return.Value, Keywords.Return },
-                { Keywords.Signed.Value, Keywords.Signed },
                 { Keywords.SizeOf.Value, Keywords.SizeOf },
+                { Keywords.Static.Value, Keywords.Static },
                 { Keywords.Struct.Value, Keywords.Struct },
                 { Keywords.Switch.Value, Keywords.Switch},
                 { Keywords.This.Value, Keywords.This },
                 { Keywords.True.Value, Keywords.True },
                 { Keywords.Try.Value, Keywords.Try },
-                { Keywords.Unsigned.Value, Keywords.Unsigned },
                 { Keywords.Using.Value, Keywords.Using },
                 { Keywords.Volatile.Value, Keywords.Volatile },
                 { Keywords.While.Value, Keywords.While  },
@@ -170,15 +192,18 @@ namespace miniJ.Helpers
                 { Operators.Sub.Value, Operators.Sub },
                 { Operators.SubAssign.Value, Operators.SubAssign },
 
-                { BuiltInTypes.Bool.Value, BuiltInTypes.Bool },
-                { BuiltInTypes.Byte.Value, BuiltInTypes.Byte },
-                { BuiltInTypes.Char.Value, BuiltInTypes.Char },
-                { BuiltInTypes.Double.Value, BuiltInTypes.Double },
-                { BuiltInTypes.Float.Value, BuiltInTypes.Float },
-                { BuiltInTypes.Int.Value, BuiltInTypes.Int },
-                { BuiltInTypes.Long.Value, BuiltInTypes.Long },
-                { BuiltInTypes.String.Value, BuiltInTypes.String },
-                { BuiltInTypes.Void.Value, BuiltInTypes.Void },
+                { BuiltInType.Bool.Value, BuiltInType.Bool },
+                { BuiltInType.Byte.Value, BuiltInType.Byte },
+                { BuiltInType.Char.Value, BuiltInType.Char },
+                { BuiltInType.Double.Value, BuiltInType.Double },
+                { BuiltInType.Float.Value, BuiltInType.Float },
+                { BuiltInType.Int.Value, BuiltInType.Int },
+                { BuiltInType.UInt.Value, BuiltInType.UInt },
+                { BuiltInType.Long.Value, BuiltInType.Long },
+                { BuiltInType.ULong.Value, BuiltInType.ULong },
+                { BuiltInType.String.Value, BuiltInType.String },
+                { BuiltInType.T.Value, BuiltInType.T },
+                { BuiltInType.Void.Value, BuiltInType.Void }
             };
         }
     }

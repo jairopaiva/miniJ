@@ -14,7 +14,7 @@ namespace miniJ.Parsing.Elements
             Tokens = tokens;
         }
 
-        public int Position { get; set; }
+        public int Position;
 
         public Token this[int Index]
         {

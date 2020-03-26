@@ -5,7 +5,7 @@ namespace miniJ.Parsing.Elements
 {
     class AssignmentExpression : Expression
     {
-        public ISyntaxNode ParentNode { get; set; }
+        public ISyntaxNode ParentNode;
         public AssignmentExpression(Token origin) : base(origin)
         {
         }

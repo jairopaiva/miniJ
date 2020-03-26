@@ -9,25 +9,7 @@ using System.Text;
 namespace miniJ.Parsing
 {
     class ParserUtils
-    {/*
-        public static AccessModifierNode GetAccessModifier(TokenType tokenType)
-        {
-            switch (tokenType)
-            {
-                case TokenType.AccessModifier_Private:
-                    return AccessModifierNode.Private;
-
-                case TokenType.AccessModifier_Protected:
-                    return AccessModifierNode.Protected;
-
-                case TokenType.AccessModifier_Public:
-                    return AccessModifierNode.Public;
-
-                default:
-                    throw new Exception();
-            }
-        }
-        */
+    {
         public static string GetExpectedTokenListAsString(TokenType[] list)
         {
             StringBuilder builder = new StringBuilder();
@@ -67,6 +49,44 @@ namespace miniJ.Parsing
             return builder.ToString();
         }
 
+        public static bool IsType(Token token)
+        {
+            switch (token.TokenType)
+            {
+                case TokenType.NotDef_TypeIdentifier:
+                case TokenType.BuiltInType_Bool:
+                case TokenType.BuiltInType_Byte:
+                case TokenType.BuiltInType_Char:
+                case TokenType.BuiltInType_Double:
+                case TokenType.BuiltInType_Float:
+                case TokenType.BuiltInType_Int:
+                case TokenType.BuiltInType_Long:
+                case TokenType.BuiltInType_String:
+                case TokenType.BuiltInType_T:
+                case TokenType.BuiltInType_Void:
+
+                case TokenType.Keyword_Auto:
+                    return true;
+                default:
+                    return false;
+            }
+        }   
+
+        public static bool IsTypeOrModifierRelatedToType(Token token)
+        {
+            switch (token.TokenType)
+            {
+                case TokenType.Keyword_Constant:
+                case TokenType.Keyword_Override:
+                case TokenType.Keyword_Readonly:
+                case TokenType.Keyword_Volatile:
+                case TokenType.Keyword_Static:
+                    return true;
+                default:
+                    return IsType(token);
+            }
+        }
+
         public static bool IsCISE(Token token)
         {
             switch (token.TokenType)
@@ -96,6 +116,29 @@ namespace miniJ.Parsing
                 default:
                     throw new Exception();
             }
+        }
+
+        public static string GetSignatureModifiers(bool constant, bool readOnly, bool Volatile, bool Static)
+        {
+            StringBuilder builder = new StringBuilder();
+            if (constant)
+            {
+                builder.Append("[" +Keywords.Constant.Value + "] ");
+            }
+            if (readOnly)
+            {
+                builder.Append("[" + Keywords.Readonly.Value + "] ");
+            }
+            if (Volatile)
+            {
+                builder.Append("[" + Keywords.Volatile.Value + "] ");
+            }
+            if (Static)
+            {
+                builder.Append("[" + Keywords.Static.Value + "] ");
+            }
+
+            return builder.ToString();
         }
 
         public static bool ValidIdentifier(string ID)

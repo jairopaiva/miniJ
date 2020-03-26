@@ -1,7 +1,9 @@
 ﻿using miniJ.Elements;
 using miniJ.Elements.Base;
+using miniJ.Lexical;
 using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing.Elements;
+using miniJ.Parsing.Elements.DataTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,38 +17,40 @@ namespace miniJ.Parsing
     /// </summary>
     class PreProcessor : ICompilerNode
     {
-        public readonly TokenReader Reader;
+        private AccessModifierNode _accessModifier;
+        private Namespace _globalNamespace;
+        private LexerResult lexerResult;
+        private TokenReader reader;
         public Token curToken;
 
-        private int _closedBlock;
+        private List<CodeError> detectedErrors;
         private int _openedBlocks;
-        private AccessModifierNode _accessModifier;
-
+        private int _closedBlock;
         public PreProcessor()
         {
-            Reader = new TokenReader(Helpers.Global.lexerTokenCollection);
+            _accessModifier = null;
             _openedBlocks = 0;
             _closedBlock = 0;
-            _accessModifier = null;
         }
 
-        public void Process(Namespace currentNamespace)
+        public List<CodeError> Start(LexerResult LexerResult, Namespace globalNamespace)
         {
-            
-            curToken = Reader.Peek();
+            detectedErrors = new List<CodeError>();
+            _globalNamespace = globalNamespace;
+            lexerResult = LexerResult;
+            reader = new TokenReader(lexerResult.lexerTokenCollection);
+            ProcessNamespaceBody(_globalNamespace);
+            return detectedErrors;
+        }
+
+        private void ProcessNamespaceBody(Namespace currentNamespace)
+        {
+            curToken = reader.Peek();
             while (curToken.TokenType != TokenType.Delimiter_EOF)
             {
                 if (curToken.TokenType == TokenType.Keyword_Namespace)
                 {
-                    ProcessNamespace(currentNamespace);
-                }
-                else if (curToken.IsToken(Token.ACCESS_MODIFIER))
-                {
-                    ProcessAccessModifier();
-                }
-                else if (ParserUtils.IsCISE(curToken))
-                {
-                    ProcessCISE(currentNamespace);
+                    ProcessNamespaceDeclaration(currentNamespace);
                 }
                 else if (curToken.TokenType == TokenType.Keyword_Using)
                 {
@@ -57,82 +61,90 @@ namespace miniJ.Parsing
                     NextToken();
                     Log(currentNamespace.ToString(), LogInfo.Created);
                 }
+                else if (curToken.IsToken(Token.ACCESS_MODIFIER))
+                {
+                    ProcessAccessModifier(false);
+                }
+                else if (ParserUtils.IsCISE(curToken))
+                {
+                    ProcessCISE(currentNamespace);
+                }
                 else
                 {
                     throw new Exception(curToken.ToString());
                 }
             }
-
-          //  Log("Finish pre-processing, took: " + DateTime.Now.Subtract(started));
         }
 
-        private void ProcessNamespace(Namespace currentNamespace)
+        private void ProcessNamespaceDeclaration(Namespace currentNamespace)
         {
+            Token origin = curToken;
             NextToken(); // namespace
-
             Namespace curGlobal = currentNamespace.Clone();
 
             if (curToken.TokenType == TokenType.Delimiter_OBlock) // namespace com nome vazio
-                goto namespaceGlobal;
+            {
+                Error("Expected namespace path(name)!", curToken);
+            }
+
             List<Token> namespaceName = ProcessDotExpr(TokenType.Delimiter_OBlock);
 
             foreach (Token nameToken in namespaceName)
             {
-                if (curGlobal.Childs.Exists(n => n.Name.Value == nameToken.Value))
+                if (curGlobal.Childs.Exists(n => n.Name == nameToken.Value))
                 {
-                    curGlobal = curGlobal.Childs.Find(n => n.Name.Value == nameToken.Value);
+                    curGlobal = curGlobal.Childs.Find(n => n.Name == nameToken.Value);
                 }
                 else
                 {
-                    Namespace newN = new Namespace(nameToken, curGlobal);
-                    if (curGlobal.Name == Helpers.Global.GlobalNamespace.Name)
+                    Namespace newN = new Namespace(origin, curGlobal);
+                    newN.Name = nameToken.Value;
+
+                    if (curGlobal.Name == _globalNamespace.Name)
                     {
-                        Helpers.Global.GlobalNamespace.Childs.Add(newN);
+                        _globalNamespace.Childs.Add(newN);
                     }
                     else
+                    {
                         curGlobal.Childs.Add(newN);
+                    }
+
                     curGlobal = newN;
                 }
             }
 
             Log(curGlobal.ToString(), LogInfo.Detected);
 
-        verificaNamespaceVazio:
-
             NextToken(); // {
             if (curToken.TokenType == TokenType.Delimiter_CBlock) // Namespace vazio
             {
-                Log("Cannot declare empthy namespaces!", LogInfo.Error);
+                Error("Cannot declare empthy namespaces!", curToken);
             }
 
-            Process(curGlobal);
-            return;
-
-        namespaceGlobal: // o namespace foi declarado sem nome, ou seja, tudo dentro dele fará parte de 'global'
-            curGlobal = Helpers.Global.GlobalNamespace.Clone();
-            goto verificaNamespaceVazio;
+            ProcessNamespaceBody(curGlobal);
         }
 
-        private void ProcessAccessModifier()
+        private void ProcessAccessModifier(bool insideCISE)
         {
             if (_accessModifier == null) // Esperado, caso contrário, algo deu errado previamente
             {
                 _accessModifier = AccessModifierNode.Get(curToken);
                 NextToken();
+
+                Log(_accessModifier.ToString(), LogInfo.Detected);
             }
             else
-                Log("More than one access modifier for the same object.", LogInfo.Error);
-
-            Log( _accessModifier.ToString(), LogInfo.Detected);
-
+            {
+                Error("More than one access modifier for the same object.", curToken);
+            }
         }
 
-        private void ProcessCISE(Namespace currentNamespace)
+        private void ProcessCISE(Namespace currentNamespace, CISE cise = null)
         {
             switch (curToken.TokenType)
             {
                 case TokenType.Keyword_Class:
-                    ProcessClass(currentNamespace);
+                    ProcessClass(currentNamespace, cise);
                     break;
 
                 case TokenType.Keyword_Interface:
@@ -148,7 +160,7 @@ namespace miniJ.Parsing
                     break;
 
                 default:
-                    throw new System.Exception();
+                    throw new Exception();
             }
         }
 
@@ -161,13 +173,14 @@ namespace miniJ.Parsing
 
             if (!currentNamespace.CanImportNamespace(usingPath))
             {
-                Log("Namespace cannot be found: " + formattedUsingPath, LogInfo.Error);
+                Log("Using at: " + currentNamespace.Name + " - Complete path: " +
+                    ParserUtils.GetDotExpr(usingPath), LogInfo.Detected);
+                NextToken(); // ;
             }
-
-            Log("Using at: " + currentNamespace.Name + " - Complete path: " +
-               ParserUtils.GetDotExpr(usingPath), LogInfo.Detected);
-
-            NextToken(); // ;
+            else
+            {
+                Error("Namespace cannot be found: " + formattedUsingPath + "!", usingPath[0]);
+            }
         }
 
         private void ProcessEnum()
@@ -182,130 +195,245 @@ namespace miniJ.Parsing
         {
         }
 
-        private void ProcessClass(Namespace currentNamespace)
+        /// <summary>
+        /// Processa a declaração de uma classe.
+        /// </summary>
+        /// <param name="currentNamespace">Namespace atual em que se encontra a declaração.</param>
+        /// <param name="cise">Quando este parâmetro é diferente de null, quer dizer que a classe a ser processada foi declarada dentro de um CISE</param>
+        private void ProcessClass(Namespace currentNamespace, CISE cise = null)
         {
             NextToken(); // class
             Class Classe = new Class(curToken, curToken);
-            Classe.AccessModifier = GetAccessModifier(SpecificAccessModifier.Private);
+            Classe.AccessModifier = GetAccessModifier(SpecificAccessModifier.PRIVATE);
+            Classe.Namespace = currentNamespace;
+
             NextToken();
             if (Expected_Token(false, TokenType.Delimiter_Collon))
             {
                 while (curToken.TokenType != TokenType.Delimiter_OBlock)
+                {
                     NextToken();
+                }
             }
 
-            currentNamespace.CISEs.Add(Classe.Name.Value, Classe);
-            Classe.Namespace = currentNamespace;
+            if (cise == null) // Esta sendo declarado "fora" de um outro CISE (dentro apenas de um namespace ou global mesmo)
+            {
+                currentNamespace.CISEs.Add(Classe.Name, Classe);
+                Log(Classe.ToString(), LogInfo.Detected);
+            }
+            else             // Esta sendo declarado "dentro" de um outro CISE
+            {
+                Classe.Root = cise;
+                cise.Children.Add(Classe);
+                Log(Classe.ToString(), LogInfo.Detected);
+            }
 
-            Log(Classe.ToString(), LogInfo.Detected);
+            ProcessClassBody(Classe, cise);
 
-            ProcessClassBody(Classe);
-
-            Log(Classe.ToString(),  LogInfo.Created);
+            Log(Classe.ToString(), LogInfo.Created);
             NextToken(); // }
         }
 
-        private void ProcessClassBody(Class fromClass)
+        private void ProcessClassBody(Class toClass, CISE fromCISE = null)
         {
-            Log(fromClass.Name.Value + " body.", LogInfo.Processing);
+            Log(toClass.Name + " body.", LogInfo.Processing);
             Expected_Token(true, TokenType.Delimiter_OBlock);
             NextToken(); // {
-
-            Token Const = null;
 
             while (curToken.TokenType != TokenType.Delimiter_CBlock)
             {
                 if (curToken.IsToken(Token.ACCESS_MODIFIER))
                 {
-                    ProcessAccessModifier();
+                    ProcessAccessModifier(true);
                 }
-                else if (curToken.IsToken(Token.PRIMITIVE_TYPE) || curToken.TokenType == TokenType.NotDef_TypeIdentifier)
+                else if (ParserUtils.IsTypeOrModifierRelatedToType(curToken)) // Um DataType ou um modificador relacionado
                 {
                     DataType type = ParseDataType();
-                    Token name = curToken;
-                    NextToken();
 
-                    bool isConstant = Const != null;
+                    if (VerifyErrorOcurred(type, typeof(DataType)))
+                    {
+                        continue;
+                    }
+
+                    List<Token> names = new List<Token>();
+                    bool openComma = false;
+                    while(curToken.TokenType == TokenType.NotDef_Identifier || curToken.TokenType == TokenType.Delimiter_Comma)
+                    {
+                        if(curToken.TokenType == TokenType.NotDef_Identifier)
+                        {
+                            names.Add(curToken);
+                            openComma = false;
+                        }
+                        else if(curToken.TokenType == TokenType.Delimiter_Comma)
+                        {
+                            openComma = true;
+                        }
+                        else
+                        {
+                            throw new Exception(curToken.ToString());
+                        }
+
+                        NextToken();
+                    }
+
+                    if (openComma)
+                    {
+                        Error("Expected variable name.", curToken);
+                    }
 
                     switch (curToken.TokenType)
                     {
                         case TokenType.Delimiter_OParenthesis:
-                            ParseMethod(name, type, fromClass);
-                            break;
+                            {
+                                if (names.Count > 1)
+                                {
+                                    Error("Invalid method name.", names[1]);
+                                }
+
+                                ParseMethod(names[0], type, toClass);
+                                break;
+                            }
                         case TokenType.Operator_Equal: // Declarando uma variável
-                            ParseVariableDeclaration(name, type, false, true, isConstant);
-                            break;
                         case TokenType.Delimiter_CInstruction:
-                            ParseVariableDeclaration(name, type, false, false, isConstant);
-                            break;
+                            {
+                                ParseVariableDeclaration(names, type, false);
+                                break;
+                            }
                         default:
-                            throw new Exception();
+                            throw new Exception(curToken.ToString());
                     }
                 }
-                else if (curToken.TokenType == TokenType.Keyword_Constant)
+                else if (ParserUtils.IsCISE(curToken))
                 {
-                    Const = curToken;
-                    NextToken();
+                    ProcessCISE(toClass.Namespace, toClass);
                 }
                 else
                 {
-                    throw new Exception();
+                    throw new Exception(curToken.ToString());
                 }
             }
-            Log(fromClass.Name + " body.", LogInfo.Created);
+
+            Log(toClass.Name + " body.", LogInfo.Created);
         }
 
         private DataType ParseDataType()
         {
             DataType dataType;
+
+            byte dataTypeAssignedSpecs = 0; // Conta quanto dessas variáveis bool abaixo foram assinaladas como true
+            bool Constant = false; // <-- Por padrão, todos os objetos são variáveis
+            bool ReadOnly = false; 
+            bool Volatile = false; 
+            bool Static = false;
+
+            int firstModifierIndex = reader.Position;
+
+            while (!ParserUtils.IsType(curToken))
+            {
+                switch (curToken.TokenType)
+                {
+                    case TokenType.Keyword_Constant:
+                        Constant = true;
+                        dataTypeAssignedSpecs++;
+                        NextToken();
+                        break;
+                    case TokenType.Keyword_Readonly:
+                        ReadOnly = true;
+                        dataTypeAssignedSpecs++;
+                        NextToken();
+                        break;
+                    case TokenType.Keyword_Volatile:
+                        Volatile = true;
+                        dataTypeAssignedSpecs++;
+                        NextToken();
+                        break;
+                    case TokenType.Keyword_Static:
+                        Static = true;
+                        dataTypeAssignedSpecs++;
+                        NextToken();
+                        break;
+                    default:
+                        throw new Exception(curToken.ToString());
+                }
+            }
+
+            if (dataTypeAssignedSpecs > 1)
+            {
+                if (!Static)
+                {
+                    Error("You can only have one signature modifier per type! Modifiers: "
+                        + ParserUtils.GetSignatureModifiers(Constant, ReadOnly, Volatile, Static) + ".", reader[firstModifierIndex + 1]);
+                    return null;
+                }
+            }
+
             if (curToken.TokenType == TokenType.NotDef_TypeIdentifier)
             {
                 dataType = new ObjectDataType(curToken)
                 {
-                    CISE = Helpers.Global.cisesDetectedInLexer.Find(cise => cise.Name.Value == curToken.Value)
+                    CISE = lexerResult.cisesDetectedInLexer.Find(cise => cise.Name == curToken.Value)
                 };
             }
-            else if (curToken.IsToken(Token.PRIMITIVE_TYPE))
+            else 
             {
                 dataType = PrimitiveDataType.GetPrimitiveType(curToken);
             }
-            else
-                throw new Exception();
 
             NextToken();
-
+            bool Array = false;
+            
             if (curToken.TokenType == TokenType.Delimiter_OIndex)
             {
-
-                dataType.Settings = new DataType.DataTypeConfiguration() { Array = true };
+                Array = true ;
 
                 NextToken();
                 Expected_Token(true, TokenType.Delimiter_CIndex);
                 NextToken();
             }
+
+            dataType.Settings = new DataTypeConfiguration()
+            {
+                Array = Array,
+                Constant = Constant,
+                ReadOnly = ReadOnly,
+                Volatile = Volatile
+            };
+
             return dataType;
         }
 
         private void ParseMethod(Token name, DataType type, CISE cise)
         {
-            Method method = new Method(name, type, GetAccessModifier(SpecificAccessModifier.Private));
+            AbstractMethod method = new AbstractMethod(name, type, GetAccessModifier(SpecificAccessModifier.PRIVATE));
+
             method.CISE = cise;
             method.Parameters = ParseMethodParametrsDclr();
-            Expected_Token(true, TokenType.Delimiter_OBlock);
-            NextToken();
 
-            uint openBlocks = 1;
-
-            while (openBlocks != 0)
+            if (cise.TypeOfCISE != CISE.SpecificTypeOfCISE.Interface)
             {
-                if (curToken.TokenType == TokenType.Delimiter_OBlock)
+
+                Expected_Token(true, TokenType.Delimiter_OBlock);
+                NextToken();
+
+                uint openBlocks = 1;
+
+                while (openBlocks != 0)
                 {
-                    openBlocks++;
+                    if (curToken.TokenType == TokenType.Delimiter_OBlock)
+                    {
+                        openBlocks++;
+                    }
+                    if (curToken.TokenType == TokenType.Delimiter_CBlock)
+                    {
+                        openBlocks--;
+                    }
+                    NextToken();
                 }
-                if (curToken.TokenType == TokenType.Delimiter_CBlock)
-                {
-                    openBlocks--;
-                }
+
+            }
+            else
+            {
+                Expected_Token(true, TokenType.Delimiter_Collon);
                 NextToken();
             }
 
@@ -313,53 +441,59 @@ namespace miniJ.Parsing
 
         }
 
-        private Variable ParseVariableDeclaration(Token Name, DataType dataType,
-            bool insideMethod, bool Assigned, bool Constant)
+        private List<Variable> ParseVariableDeclaration(List<Token> Names, DataType dataType,bool insideMethod)
         {
-            Variable variable;
+            List<Variable> dclrVariables = new List<Variable>();
 
-            if (!insideMethod) // Se estiver fora de um método, consiste em um Field
+            for (int nameIndex = 0; nameIndex < Names.Count; nameIndex++)
             {
-                variable = new Field(dataType.Origin)
+                Variable variable;
+                if (!insideMethod) // Se estiver fora de um método, consiste em um Field
                 {
-                    AccessModifier = GetAccessModifier(SpecificAccessModifier.Private)
-                };
-            }
-            else // Caso contrário, uma variável normal
-            {
-                variable = new Variable(dataType.Origin);
+                    variable = new Field(Names[nameIndex])
+                    {
+                        AccessModifier = GetAccessModifier(SpecificAccessModifier.PRIVATE)
+                    };
+                }
+                else // Caso contrário, uma variável normal
+                {
+                    variable = new Variable(Names[nameIndex]);
+                }
+
+                variable.Type = dataType;
+                variable.Name = Names[nameIndex].Value;
+
+                dclrVariables.Add(variable);
             }
 
-            variable.Type = dataType;
-            variable.Name = Name;
-            variable.Constant = Constant;
-
-            if (Assigned)
+            if (curToken.TokenType == TokenType.Operator_Equal)
             {
-                // variable.Value = ParseAsssignExpr();
+                //  Expression variablesValue = ParseAsssignExpr();
                 while (curToken.TokenType != TokenType.Delimiter_CInstruction)
                 {
                     NextToken();
                 }
-                NextToken();
+                NextToken(); // ;
             }
             else
             {
-                if(Constant) // Uma constante necessita ser assinalada ao ser declarada
+                if (dataType.Settings.Constant) // Uma constante necessita ser assinalada ao ser declarada
                 {
-                    Log("A constant needs to be flagged when it is declared.", LogInfo.Error);
+                    Error("A constant needs to be flagged when it is declared.", curToken);
                 }
 
                 Expected_Token(true, TokenType.Delimiter_CInstruction);
                 NextToken();
             }
 
-            Log(variable.ToString(), LogInfo.Created);
-
-            return variable;
+            foreach (Variable variable in dclrVariables)
+            {
+                Log(variable.ToString(), LogInfo.Created);
+            }
+            return dclrVariables;
         }
 
-        private List<ParameterDeclaration> ParseMethodParametrsDclr(Method curMethod = null)
+        private List<ParameterDeclaration> ParseMethodParametrsDclr(AbstractMethod curMethod = null)
         {
             NextToken(); // (
             List<ParameterDeclaration> parameters = new List<ParameterDeclaration>();
@@ -376,16 +510,16 @@ namespace miniJ.Parsing
 
         private ParameterDeclaration ParseParameterDeclaration()
         {
-            if (!Expected_Token(false, TokenType.NotDef_TypeIdentifier) && !curToken.IsToken(Token.PRIMITIVE_TYPE))
+            if (!Expected_Token(false, TokenType.NotDef_TypeIdentifier) && !curToken.IsToken(Token.BuiltInType))
             {
-                throw new Exception();
+                throw new Exception(curToken.ToString());
             }
 
             DataType dataType = ParseDataType();
 
-            ParameterDeclaration parameter = new ParameterDeclaration(curToken);
+            ParameterDeclaration parameter = new ParameterDeclaration(dataType.Origin);
             parameter.Type = dataType;
-            parameter.Name = curToken;
+            parameter.Name = curToken.Value;
 
             NextToken();
 
@@ -400,7 +534,7 @@ namespace miniJ.Parsing
                 case TokenType.Delimiter_CParenthesis:
                     break;
                 default:
-                    throw new Exception();
+                    throw new Exception(curToken.ToString());
             }
 
             return parameter; ;
@@ -432,8 +566,8 @@ namespace miniJ.Parsing
 
         private void NextToken()
         {
-            Reader.Read();
-            curToken = Reader.Peek();
+            reader.Read();
+            curToken = reader.Peek();
             switch (curToken.TokenType)
             {
                 case TokenType.Delimiter_OBlock:
@@ -455,7 +589,7 @@ namespace miniJ.Parsing
                 {
                     if (Identifier && !ParserUtils.ValidIdentifier(curToken.Value))
                     {
-                        Log("Invalid identifier!", LogInfo.Error);
+                        Error("Invalid identifier!", curToken);
                     }
                     result.Add(curToken);
                 }
@@ -484,26 +618,28 @@ namespace miniJ.Parsing
             }
 
             if (!result && throwable)
-                Log("Expected " + ParserUtils.GetExpectedTokenListAsString(expectedTokens) , LogInfo.Error);
+            {
+                Error("Expected " + ParserUtils.GetExpectedTokenListAsString(expectedTokens), curToken);
+            }
 
             return result;
         }
 
-        private void Debug(bool readKey = true, string text = "", Token token = null)
+        private void Debug(bool readKey = true, string text = "")
         {
-            if (token != null)
-                Console.WriteLine(text + token.ToString());
-            else
-                Console.WriteLine(text + curToken.ToString());
+            Console.WriteLine(text + curToken.ToString());
+
             if (readKey)
+            {
                 Console.ReadKey();
+            }
         }
 
         private void Log(string message, LogInfo typeOfLog)
         {
             string msg = string.Empty;
             bool error = false;
-            
+
             switch (typeOfLog)
             {
                 case LogInfo.Created:
@@ -526,13 +662,40 @@ namespace miniJ.Parsing
                 default:
                     break;
             }
-            
 
             msg += message;
             Helpers.Global.Logger.Log(msg, this);
+        }
 
-            if (error)
-                throw new Exception(msg + Environment.NewLine + curToken.ToString());
+        /// <summary>
+        ///  Desta forma, fazemos com que seja possível descobrir o máximo de erros numa única verificação
+        /// </summary>
+        /// <param name="message">Especificação do erro</param>
+        /// <param name="errorToken">Token que causa o erro</param>
+        private void Error(string message, Token errorToken)
+        {
+            Log(message, LogInfo.Error);
+
+            while (curToken.Location.File == errorToken.Location.File
+                  && curToken.Location.Line == errorToken.Location.Line)
+            {
+                NextToken();
+            }
+
+            //  Debug(true, "Final do erro");
+            CodeError codeError = new CodeError(errorToken, this, message);
+            detectedErrors.Add(codeError);
+        }
+
+        private bool VerifyErrorOcurred(ISyntaxNode returnedNode, Type expectedResultType)
+        {
+            bool errorOcurred = returnedNode == null;
+            if(expectedResultType == typeof(DataType))
+            {
+                _accessModifier = null;
+            }
+
+            return errorOcurred;
         }
 
         private enum LogInfo

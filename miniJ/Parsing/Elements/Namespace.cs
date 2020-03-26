@@ -12,22 +12,22 @@ namespace miniJ.Elements
 
         public Namespace(Token origin, Namespace parent) : base(origin)
         {
-            Name = origin;
             Childs = new List<Namespace>();
             CISEs = new Dictionary<string, CISE>();
             Imports = new List<Namespace>();
             Parent = parent;
         }
 
-        public List<Namespace> Childs { get; set; }
-        public Dictionary<string, CISE> CISEs { get; set; }
-        public List<Namespace> Imports { get; set; }
-        public Token Name { get; set; } // Nome específico
+        public List<Namespace> Childs;
+        public Dictionary<string, CISE> CISEs;
+        public List<Namespace> Imports;
+        public string Name; // Nome específico
 
         public Namespace Clone()
         {
             Namespace clone = new Namespace(this.Origin, this.Parent)
             {
+                Name = this.Name,
                 Childs = this.Childs,
                 CISEs = this.CISEs,
                 Imports = this.Imports
@@ -46,7 +46,7 @@ namespace miniJ.Elements
             Namespace n = this;
             while (n != null)
             {
-                string name = n.Name.Value;
+                string name = n.Name;
                 namespaceNames.Add(name);
                 n = n.Parent;
             }

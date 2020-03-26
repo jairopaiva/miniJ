@@ -1,6 +1,6 @@
-﻿using miniJ.Elements;
-using miniJ.Elements.Base;
+﻿using miniJ.Elements.Base;
 using miniJ.Lexical.Elements.Token;
+using miniJ.Parsing.Elements.DataTypes;
 
 namespace miniJ.Parsing.Elements
 {
@@ -9,17 +9,16 @@ namespace miniJ.Parsing.Elements
     /// </summary>
     class Variable : ISyntaxNode
     {
-        public Token Name { get; set; }
-        public bool Constant { get; set; }
-        public DataType Type { get; set; }
-        public Expression Value { get; set; }
+        public string Name;
+        public DataType Type;
+        public Expression Value;
         public Variable(Token origin) : base(origin)
         {
         }
 
         public override string ToString()
         {
-            return this.GetType().Name + " named as " + Name + ", of " + Type.Name + " type. Has value = "
+            return this.GetType().Name + " named as " + Name + ", of " + Type.Name + " type. Assigned = "
               + (Value != null);
         }
     }

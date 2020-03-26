@@ -8,9 +8,9 @@
             TokenType = TokenType.NotDef_None;
         }
 
-        public NodeLocation Location { get; set; }
-        public TokenType TokenType { get; set; }
-        public string Value { get; set; }
+        public NodeLocation Location;
+        public TokenType TokenType;
+        public string Value;
 
         public Token Copy(NodeLocation location)
         {
@@ -50,6 +50,6 @@
         public const string KEYWORD = "Keyword";
         public const string OPERATOR = "Operator";
         public const string NOT_DEF = "NotDef";
-        public const string PRIMITIVE_TYPE = "PrimitiveType";
+        public const string BuiltInType = "BuiltInType";
     }
 }

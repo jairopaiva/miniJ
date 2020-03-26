@@ -1,5 +1,4 @@
 ﻿using miniJ.Elements.Base;
-using miniJ.Grammar;
 using miniJ.Lexical.Elements.Token;
 
 namespace miniJ.Parsing.Elements
@@ -8,7 +7,9 @@ namespace miniJ.Parsing.Elements
     {
         public SpecificAccessModifier SpecificAccessModifier;
         private AccessModifierNode(Token origin, SpecificAccessModifier specificAccessModifier) : base(origin)
-        { SpecificAccessModifier = specificAccessModifier; }
+        {
+            SpecificAccessModifier = specificAccessModifier; 
+        }
 
         public static AccessModifierNode Get(Token origin, SpecificAccessModifier accessModifier)
         {
@@ -25,11 +26,11 @@ namespace miniJ.Parsing.Elements
             switch (origin.TokenType)
             {
                 case TokenType.AccessModifier_Private:
-                    return SpecificAccessModifier.Private;
+                    return SpecificAccessModifier.PRIVATE;
                 case TokenType.AccessModifier_Protected:
-                    return SpecificAccessModifier.Protected;
+                    return SpecificAccessModifier.PROTECTED;
                 case TokenType.AccessModifier_Public:
-                    return SpecificAccessModifier.Public;
+                    return SpecificAccessModifier.PUBLIC;
                 default:
                     throw new System.Exception();
             }
@@ -43,8 +44,8 @@ namespace miniJ.Parsing.Elements
 
     public enum SpecificAccessModifier
     {
-        Public,
-        Private,
-        Protected
+        PROTECTED = 0x0001,
+        PUBLIC = 0x0002,
+        PRIVATE = 0x0004
     }
 }

@@ -2,7 +2,7 @@
 
 namespace miniJ.Grammar
 {
-     class AccessModifier
+    class AccessModifier
     {
         public static readonly Token Private = new Token("private") { TokenType = TokenType.AccessModifier_Private };
         public static readonly Token Protected = new Token("protected") { TokenType = TokenType.AccessModifier_Protected };
@@ -78,19 +78,19 @@ namespace miniJ.Grammar
         public static readonly Token Namespace = new Token("namespace") { TokenType = TokenType.Keyword_Namespace };
         public static readonly Token New = new Token("new") { TokenType = TokenType.Keyword_New };
         public static readonly Token Null = new Token("null") { TokenType = TokenType.Keyword_Null };
+        public static readonly Token Override = new Token("override") { TokenType = TokenType.Keyword_Override };
         public static readonly Token Readonly = new Token("readonly") { TokenType = TokenType.Keyword_Readonly };
         public static readonly Token Return = new Token("return") { TokenType = TokenType.Keyword_Return };
-        public static readonly Token Signed = new Token("signed") { TokenType = TokenType.Keyword_Signed };
         public static readonly Token SizeOf = new Token("sizeof") { TokenType = TokenType.Keyword_SizeOf };
+        public static readonly Token Static = new Token("static") { TokenType = TokenType.Keyword_Static };
         public static readonly Token Struct = new Token("struct") { TokenType = TokenType.Keyword_Struct };
         public static readonly Token Switch = new Token("switch") { TokenType = TokenType.Keyword_Switch };
         public static readonly Token This = new Token("this") { TokenType = TokenType.Keyword_This };
         public static readonly Token True = new Token("true") { TokenType = TokenType.Keyword_True };
         public static readonly Token Try = new Token("try") { TokenType = TokenType.Keyword_Try };
-        public static readonly Token Unsigned = new Token("unsigned") { TokenType = TokenType.Keyword_Unsigned };
         public static readonly Token Using = new Token("using") { TokenType = TokenType.Keyword_Using };
         public static readonly Token Volatile = new Token("volatile") { TokenType = TokenType.Keyword_Volatile };
-        public static readonly Token While = new Token("while") { TokenType = TokenType.Keyword_While };
+        public static readonly Token While = new Token("while") { TokenType = TokenType.Keyword_While }; 
         //   public static readonly Token Register = new Token("register"; // The register keyword creates register variables which are much faster than normal variables.
         //   public static readonly Token Onion = new Token("union"; // A Union is used for grouping different types of variable under a single name and allocates memory only of the biggest variable.
     }
@@ -110,16 +110,19 @@ namespace miniJ.Grammar
         public static readonly Token SubAssign = new Token("-=") { TokenType = TokenType.Operator_SubAssign };
     }
 
-     class BuiltInTypes
+     class BuiltInType
     {
-        public static readonly Token Bool = new Token("bool") { TokenType = TokenType.PrimitiveType_Bool };
-        public static readonly Token Byte = new Token("byte") { TokenType = TokenType.PrimitiveType_Byte };
-        public static readonly Token Char = new Token("char") { TokenType = TokenType.PrimitiveType_Char };
-        public static readonly Token Double = new Token("double") { TokenType = TokenType.PrimitiveType_Double };
-        public static readonly Token Float = new Token("float") { TokenType = TokenType.PrimitiveType_Float };
-        public static readonly Token Int = new Token("int") { TokenType = TokenType.PrimitiveType_Int };
-        public static readonly Token Long = new Token("long") { TokenType = TokenType.PrimitiveType_Long };
-        public static readonly Token String = new Token("string") { TokenType = TokenType.PrimitiveType_String };
-        public static readonly Token Void = new Token("void") { TokenType = TokenType.PrimitiveType_Void };
+        public static readonly Token Bool = new Token("bool") { TokenType = TokenType.BuiltInType_Bool };
+        public static readonly Token Byte = new Token("byte") { TokenType = TokenType.BuiltInType_Byte };
+        public static readonly Token Char = new Token("char") { TokenType = TokenType.BuiltInType_Char };
+        public static readonly Token Double = new Token("double") { TokenType = TokenType.BuiltInType_Double };
+        public static readonly Token Float = new Token("float") { TokenType = TokenType.BuiltInType_Float };
+        public static readonly Token Int = new Token("int") { TokenType = TokenType.BuiltInType_Int };
+        public static readonly Token UInt = new Token("uint") { TokenType = TokenType.BuiltInType_UInt };
+        public static readonly Token Long = new Token("long") { TokenType = TokenType.BuiltInType_Long };
+        public static readonly Token ULong = new Token("ulong") { TokenType = TokenType.BuiltInType_ULong };
+        public static readonly Token String = new Token("string") { TokenType = TokenType.BuiltInType_String };
+        public static readonly Token T = new Token("T") { TokenType = TokenType.BuiltInType_T };
+        public static readonly Token Void = new Token("void") { TokenType = TokenType.BuiltInType_Void };
     }
 }

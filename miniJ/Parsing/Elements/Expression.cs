@@ -11,6 +11,6 @@ namespace miniJ.Parsing.Elements
             Nodes = new List<ISyntaxNode>();
         }
 
-        public List<ISyntaxNode> Nodes { get; set; }
+        public List<ISyntaxNode> Nodes;
     }
 }

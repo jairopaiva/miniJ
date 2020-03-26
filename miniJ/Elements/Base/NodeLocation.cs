@@ -2,9 +2,9 @@
 {
      struct NodeLocation
     {
-        public int Column { get; set; }
-        public string File { get; set; }
-        public int Line { get; set; }
+        public int Column;
+        public string File;
+        public int Line;
 
         public override string ToString()
         {

@@ -1,24 +1,16 @@
 ﻿using miniJ.Elements.Base;
 using miniJ.Lexical.Elements.Token;
-using System;
-using System.Collections.Generic;
 using System.Text;
 
-namespace miniJ.Parsing.Elements
+namespace miniJ.Parsing.Elements.DataTypes
 {
     class DataType : ISyntaxNode
     {
-        public string Name { get; set; }
-        public DataTypeConfiguration Settings { get; set; }
+        public string Name;
+        public DataTypeConfiguration Settings;
         public DataType(Token origin) : base(origin)
         {
             Name = origin.Value;
-        }
-
-        public struct DataTypeConfiguration
-        {
-            public bool Array { get; set; }
-            public bool Static { get; set; }
         }
 
         public override string ToString()

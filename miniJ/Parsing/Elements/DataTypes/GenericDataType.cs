@@ -4,12 +4,11 @@ using miniJ.Parsing;
 using miniJ.Parsing.Elements;
 using System.Collections.Generic;
 
-namespace miniJ.Elements
+namespace miniJ.Parsing.Elements.DataTypes
 {
-    class ObjectDataType : DataType
+    class GenericDataType : DataType
     {
-        public CISE CISE { get; set; }
-        public ObjectDataType(Token origin) : base(origin)
+        public GenericDataType(Token origin) : base(origin)
         {
         }
     }
