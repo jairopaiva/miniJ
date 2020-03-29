@@ -4,8 +4,8 @@ namespace namespace_1.Tey // Comentario namespace
     {
 		public class TEY_SYNTAXTESTS_STRUCT_Test
 		{
-			public static const int mutableInteger, blaInteger = 666; // Comentario aleatorio
-			public const readonly int constantInteger1, constantInteger2 = 745;
+			public static const int imutableInteger, blaInteger = 666; // Comentario aleatorio
+			public const int constantInteger1, constantInteger2 = 745;
 		}
 	}
 	
@@ -15,5 +15,18 @@ namespace namespace_1.Tey // Comentario namespace
 		{
 			public int[] constIntArray;
 		}
+	}
+	
+	namespace bla
+	{
+		public class InsideTeyTest
+		{
+			public int[] constIntArray;
+		}
+	}
+	
+	class Object
+	{
+		public int bla;
 	}
 }

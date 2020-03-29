@@ -64,6 +64,7 @@
         Keyword_Namespace,
         Keyword_New,
         Keyword_Null,
+        Keyword_Operator,
         Keyword_Override,
         Keyword_Readonly,
         Keyword_Return,
@@ -75,6 +76,7 @@
         Keyword_True,
         Keyword_Try,
         Keyword_Using,
+        Keyword_Virtual,
         Keyword_Volatile,
         Keyword_While,
 

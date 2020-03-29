@@ -58,7 +58,7 @@ namespace miniJ.Lexical
                 {
                     Reader.Read();
                 }
-                else if (char.IsLetter(curChar))
+                else if (char.IsLetter(curChar) || curChar==LexerUtils.UNDERLINE)
                 {
                     ParseLetter(ref tokens);
                 }
@@ -118,7 +118,14 @@ namespace miniJ.Lexical
                 if (token.TokenType == TokenType.NotDef_None)
                 {
                     if (!_nextTokenCISEIdentifier)
+                    {
+                        if (!ParserUtils.ValidIdentifier(token.Value))
+                        {
+                            throw new Exception(token.ToString());
+                        }
+
                         token.TokenType = TokenType.NotDef_Identifier;
+                    }
                     else
                     {
                         token.TokenType = TokenType.NotDef_TypeIdentifier;

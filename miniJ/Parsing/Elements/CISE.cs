@@ -30,10 +30,7 @@ namespace miniJ.Parsing.Elements
         public List<CISE> Children;
         public CISE(Token name, SpecificTypeOfCISE type, Token origin) : base(origin)
         {
-            if (ParserUtils.ValidIdentifier(name.Value))
-                Name = name.Value;
-            else
-                throw new Exception();
+            Name = name.Value;
             TypeOfCISE = type;
             Children = new List<CISE>();
         }

@@ -16,12 +16,14 @@ namespace miniJ.Elements
             CISEs = new Dictionary<string, CISE>();
             Imports = new List<Namespace>();
             Parent = parent;
+            Open = true;
         }
 
         public List<Namespace> Childs;
         public Dictionary<string, CISE> CISEs;
         public List<Namespace> Imports;
         public string Name; // Nome específico
+        public bool Open; // Se true, ainda está sendo processado, caso false, já foi processado e "fechado(})"
 
         public Namespace Clone()
         {
@@ -30,7 +32,8 @@ namespace miniJ.Elements
                 Name = this.Name,
                 Childs = this.Childs,
                 CISEs = this.CISEs,
-                Imports = this.Imports
+                Imports = this.Imports,
+                Open = this.Open
             };
             return clone;
         }

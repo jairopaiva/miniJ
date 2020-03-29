@@ -30,8 +30,7 @@ namespace miniJ.Helpers
                 Logger.Log("Finished pre-processing with errors:", PreProcessor);
                 foreach (CodeError error in detectedErrors)
                 {
-                    string formattedError = error.Error + " At: " + error.ErrorToken.ToString(); 
-                    Logger.Log(formattedError, PreProcessor);
+                    Logger.Log(error.ErrorMessage, PreProcessor);
                 }
             }
             else
@@ -134,6 +133,7 @@ namespace miniJ.Helpers
                 { Delimiters.OIndex.Value, Delimiters.OIndex },
                 { Delimiters.OParenthesis.Value, Delimiters.OParenthesis },
                 { Delimiters.TwoCollon.Value, Delimiters.TwoCollon },
+                { Delimiters.EOF.Value, Delimiters.EOF },
 
                 { Directives.Define.Value, Directives.Define },
                 { Directives.ElseIf.Value, Directives.ElseIf },
@@ -166,6 +166,7 @@ namespace miniJ.Helpers
                 { Keywords.Namespace.Value, Keywords.Namespace },
                 { Keywords.New.Value, Keywords.New },
                 { Keywords.Null.Value, Keywords.Null },
+                { Keywords.Operator.Value, Keywords.Operator },
                 { Keywords.Override.Value, Keywords.Override },
                 { Keywords.Readonly.Value, Keywords.Readonly },
                 { Keywords.Return.Value, Keywords.Return },
@@ -177,6 +178,7 @@ namespace miniJ.Helpers
                 { Keywords.True.Value, Keywords.True },
                 { Keywords.Try.Value, Keywords.Try },
                 { Keywords.Using.Value, Keywords.Using },
+                { Keywords.Virtual.Value, Keywords.Virtual },
                 { Keywords.Volatile.Value, Keywords.Volatile },
                 { Keywords.While.Value, Keywords.While  },
 

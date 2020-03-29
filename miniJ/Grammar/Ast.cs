@@ -33,7 +33,7 @@ namespace miniJ.Grammar
         public static readonly Token Comma = new Token(",") { TokenType = TokenType.Delimiter_Comma };
         public static readonly Token CParenthesis = new Token(")") { TokenType = TokenType.Delimiter_CParenthesis };
         public static readonly Token Dot = new Token(".") { TokenType = TokenType.Delimiter_Dot };
-        public static readonly Token EOF = new Token("") { TokenType = TokenType.Delimiter_EOF };
+        public static readonly Token EOF = new Token("End of File") { TokenType = TokenType.Delimiter_EOF };
         public static readonly Token OBlock = new Token("{") { TokenType = TokenType.Delimiter_OBlock };
         public static readonly Token OIndex = new Token("[") { TokenType = TokenType.Delimiter_OIndex };
         public static readonly Token OParenthesis = new Token("(") { TokenType = TokenType.Delimiter_OParenthesis };
@@ -78,6 +78,7 @@ namespace miniJ.Grammar
         public static readonly Token Namespace = new Token("namespace") { TokenType = TokenType.Keyword_Namespace };
         public static readonly Token New = new Token("new") { TokenType = TokenType.Keyword_New };
         public static readonly Token Null = new Token("null") { TokenType = TokenType.Keyword_Null };
+        public static readonly Token Operator = new Token("operator") { TokenType = TokenType.Keyword_Operator };
         public static readonly Token Override = new Token("override") { TokenType = TokenType.Keyword_Override };
         public static readonly Token Readonly = new Token("readonly") { TokenType = TokenType.Keyword_Readonly };
         public static readonly Token Return = new Token("return") { TokenType = TokenType.Keyword_Return };
@@ -89,6 +90,7 @@ namespace miniJ.Grammar
         public static readonly Token True = new Token("true") { TokenType = TokenType.Keyword_True };
         public static readonly Token Try = new Token("try") { TokenType = TokenType.Keyword_Try };
         public static readonly Token Using = new Token("using") { TokenType = TokenType.Keyword_Using };
+        public static readonly Token Virtual = new Token("virtual") { TokenType = TokenType.Keyword_Virtual };
         public static readonly Token Volatile = new Token("volatile") { TokenType = TokenType.Keyword_Volatile };
         public static readonly Token While = new Token("while") { TokenType = TokenType.Keyword_While }; 
         //   public static readonly Token Register = new Token("register"; // The register keyword creates register variables which are much faster than normal variables.

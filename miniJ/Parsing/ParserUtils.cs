@@ -10,6 +10,12 @@ namespace miniJ.Parsing
 {
     class ParserUtils
     {
+        public static readonly TokenType[] AllCISETokens = { TokenType.Keyword_Class, TokenType.Keyword_Interface, TokenType.Keyword_Struct, TokenType.Keyword_Enum };
+        public static readonly TokenType[] AllAccessTokens = { TokenType.AccessModifier_Private, TokenType.AccessModifier_Protected, TokenType.AccessModifier_Public };
+        public static readonly TokenType[] AllBuiltInTokens = { TokenType.BuiltInType_Bool , TokenType.BuiltInType_Byte, TokenType.BuiltInType_Char, TokenType.BuiltInType_Double,
+                                                                TokenType.BuiltInType_Float,TokenType.BuiltInType_Int, TokenType.BuiltInType_Long, TokenType.BuiltInType_String,
+                                                                TokenType.BuiltInType_T,TokenType.BuiltInType_UInt,TokenType.BuiltInType_ULong,TokenType.BuiltInType_Void};
+
         public static string GetExpectedTokenListAsString(TokenType[] list)
         {
             StringBuilder builder = new StringBuilder();
@@ -68,6 +74,8 @@ namespace miniJ.Parsing
                 case TokenType.Keyword_Auto:
                     return true;
                 default:
+                    if (Helpers.Global.lexerResult.cisesDetectedInLexer.Exists(cise => cise.Name == token.Value))
+                        return true;
                     return false;
             }
         }   
@@ -118,7 +126,7 @@ namespace miniJ.Parsing
             }
         }
 
-        public static string GetSignatureModifiers(bool constant, bool readOnly, bool Volatile, bool Static)
+        public static string GetSignatureModifiers(bool constant, bool readOnly, bool Volatile, bool Static, bool Virtual)
         {
             StringBuilder builder = new StringBuilder();
             if (constant)
@@ -137,15 +145,16 @@ namespace miniJ.Parsing
             {
                 builder.Append("[" + Keywords.Static.Value + "] ");
             }
+            if (Virtual)
+            {
+                builder.Append("[" + Keywords.Virtual.Value + "] ");
+            }
 
             return builder.ToString();
         }
 
         public static bool ValidIdentifier(string ID)
         {
-            if (ID[0] == LexerUtils.UNDERLINE || ID[ID.Length - 1] == LexerUtils.UNDERLINE)
-                return false;
-
             for (int i = 0; i < ID.Length; i++)
                 if (!char.IsDigit(ID[i]) && !char.IsLetter(ID[i]) && ID[i] != LexerUtils.UNDERLINE)
                     return false;
