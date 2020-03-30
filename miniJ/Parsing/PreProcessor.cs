@@ -72,14 +72,14 @@ namespace miniJ.Parsing
                         }
                         else
                         {
-                            Error("Invalid token!", curToken, TokenType.Keyword_Namespace, TokenType.Delimiter_EOF);
+                            Error(CodeError.INVALID_TOKEN, curToken, TokenType.Keyword_Namespace, TokenType.Delimiter_EOF);
                         }
                     }
                     else
                     {
                         int lastBeforeThis = _bracketsInCode.Count - 2;
-                        Error("The namespace has already been closed on ["
-                            + _bracketsInCode[lastBeforeThis].Location.ToString() + "]", curToken, TokenType.Keyword_Namespace, TokenType.Delimiter_EOF);
+                        Error(CodeError.NAMESPACE_ALREADY_CLOSED + _bracketsInCode[lastBeforeThis].Location.ToString()
+                                                        ,curToken, TokenType.Keyword_Namespace, TokenType.Delimiter_EOF);
                     }
                 }
                 else if (curToken.IsToken(Token.ACCESS_MODIFIER))
@@ -336,6 +336,12 @@ namespace miniJ.Parsing
                         continue;
                     }
 
+                    if(curToken.TokenType == TokenType.Delimiter_OParenthesis) // Construtor
+                    {
+                        ParseMethod(ParserUtils.CONSTRUCTOR_NAME, type, toClass, Virtual);
+                        continue;
+                    }
+
                     List<Token> names = new List<Token>();
                     bool openComma = false;
                     while(curToken.TokenType == TokenType.NotDef_Identifier || curToken.TokenType == TokenType.Delimiter_Comma)
@@ -371,7 +377,7 @@ namespace miniJ.Parsing
                                     Error("Invalid method name.", names[1]);
                                 }
 
-                                ParseMethod(names[0], type, toClass, Virtual);
+                                ParseMethod(names[0].Value, type, toClass, Virtual);
                                 break;
                             }
                         case TokenType.Operator_Equal: // Declarando uma variável
@@ -379,7 +385,7 @@ namespace miniJ.Parsing
                             {
                                 if (Virtual)
                                 {
-                                    Error("Virtual is invalid for this item!", names[0]);
+                                    Error(CodeError.INVALID_MEMBER_MODIFIER, names[0]);
                                 }
 
                                 ParseVariableDeclaration(names, type, false);
@@ -473,7 +479,7 @@ namespace miniJ.Parsing
             NextToken();
             bool Array = false;
 
-            if (Expected_Token(UnionTokenTypes(TokenType.NotDef_Identifier, TokenType.Delimiter_OIndex)))
+            if (Expected_Token(UnionTokenTypes(TokenType.NotDef_Identifier, TokenType.Delimiter_OIndex, TokenType.Delimiter_OParenthesis)))
             {
                 if (curToken.TokenType == TokenType.Delimiter_OIndex)
                 {
@@ -498,13 +504,22 @@ namespace miniJ.Parsing
             return dataType;
         }
 
-        private void ParseMethod(Token name, DataType type, CISE cise, bool Virtual)
+        private void ParseMethod(string name, DataType type, CISE cise, bool Virtual)
         {
             AbstractMethod method = new AbstractMethod(name, type, GetAccessModifier(SpecificAccessModifier.PRIVATE));
 
             method.CISE = cise;
             method.Parameters = ParseMethodParametrsDclr();
             method.Virtual = Virtual;
+
+            if(name == ParserUtils.CONSTRUCTOR_NAME)
+            {
+                if (Virtual)
+                {
+                    Error(CodeError.INVALID_MEMBER_MODIFIER, type.Origin);
+                }
+                cise.Constructor = method;
+            }
 
             if (cise.TypeOfCISE != CISE.SpecificTypeOfCISE.Interface)
             {
@@ -593,7 +608,14 @@ namespace miniJ.Parsing
         private List<ParameterDeclaration> ParseMethodParametrsDclr(AbstractMethod curMethod = null)
         {
             NextToken(); // (
+
             List<ParameterDeclaration> parameters = new List<ParameterDeclaration>();
+
+            if (curToken.TokenType == TokenType.Delimiter_CParenthesis) // Sem parâmetros
+            {
+                NextToken();
+                return parameters;
+            }
 
             while (curToken.TokenType != TokenType.Delimiter_CParenthesis)
             {
@@ -607,9 +629,14 @@ namespace miniJ.Parsing
 
         private ParameterDeclaration ParseParameterDeclaration()
         {
-            if (!Expected_Token(UnionTokenTypes(TokenType.NotDef_TypeIdentifier, ParserUtils.AllBuiltInTokens)))
+            if (!Expected_Token(UnionTokenTypes(TokenType.NotDef_TypeIdentifier, ParserUtils.AllBuiltInTokens), TokenType.Delimiter_Comma, TokenType.Delimiter_CParenthesis))
             {
-                throw new Exception(curToken.ToString());
+                if(curToken.TokenType== TokenType.Delimiter_Comma)
+                {
+                    NextToken();
+                }
+
+                return null;
             }
 
             Token error = curToken;
@@ -618,7 +645,8 @@ namespace miniJ.Parsing
 
             if (Virtual)
             {
-                Error("Cannot use this member modifier in parameter declaration.", error);
+                Error(CodeError.INVALID_MEMBER_MODIFIER, error);
+                return null; 
             }
 
             ParameterDeclaration parameter = new ParameterDeclaration(dataType.Origin);
@@ -641,6 +669,7 @@ namespace miniJ.Parsing
                     throw new Exception(curToken.ToString());
             }
 
+            Log(parameter.ToString(), LogInfo.Created);
             return parameter; ;
         }
 

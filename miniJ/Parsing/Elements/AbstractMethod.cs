@@ -1,5 +1,4 @@
 ﻿using miniJ.Elements.Base;
-using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing.Elements.DataTypes;
 using System.Collections.Generic;
 
@@ -14,9 +13,9 @@ namespace miniJ.Parsing.Elements
         public string Name;
         public CISE CISE;
         
-        public AbstractMethod(Token origin, DataType returnType, AccessModifierNode accessModifier) : base(origin)
+        public AbstractMethod(string name, DataType returnType, AccessModifierNode accessModifier) : base(returnType.Origin)
         {
-            Name = origin.Value;
+            Name = name;
             ReturnType = returnType;
             AccessModifier = accessModifier;
             Parameters = new List<ParameterDeclaration>();

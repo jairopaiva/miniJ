@@ -10,24 +10,27 @@ namespace miniJ.Parsing.Elements
     class CISE : ISyntaxNode
     {
 
-        public string Name;
-        public SpecificTypeOfCISE TypeOfCISE;
-        /// <summary>
-        /// Namespace em que este CISE está declarado
-        /// </summary>
-        public Namespace Namespace;
+        
         /// <summary>
         /// Escopo de acesso para este CISE
         /// </summary>
         public AccessModifierNode AccessModifier;
-        /// <summary>
-        /// Quando diferente de null, quer dizer que este CISE foi declarado dentro de outro
-        /// </summary>
-        public CISE Root;
+        public SpecificTypeOfCISE TypeOfCISE;
+        public AbstractMethod Constructor;
         /// <summary>
         /// CISES que foram declarados dentro deste
         /// </summary>
         public List<CISE> Children;
+        /// <summary>
+        /// Namespace em que este CISE está declarado
+        /// </summary>
+        public Namespace Namespace;
+        public string Name;
+        /// <summary>
+        /// Quando diferente de null, quer dizer que este CISE foi declarado dentro de outro
+        /// </summary>
+        public CISE Root;
+       
         public CISE(Token name, SpecificTypeOfCISE type, Token origin) : base(origin)
         {
             Name = name.Value;

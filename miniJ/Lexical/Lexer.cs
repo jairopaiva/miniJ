@@ -54,11 +54,19 @@ namespace miniJ.Lexical
                     Reader.NewLine();
                     Reader.Read();
                 }
-                else if (char.IsWhiteSpace(curChar))
+                else if (char.IsWhiteSpace(curChar) || curChar == LexerUtils.TAB_CHAR)
                 {
-                    Reader.Read();
+                    if (curChar == LexerUtils.TAB_CHAR)
+                    {
+                        Reader.Read();
+                        Reader.Column += 3;
+                    }
+                    else
+                    {
+                        Reader.Read();
+                    }
                 }
-                else if (char.IsLetter(curChar) || curChar==LexerUtils.UNDERLINE)
+                else if (char.IsLetter(curChar) || curChar == LexerUtils.UNDERLINE)
                 {
                     ParseLetter(ref tokens);
                 }

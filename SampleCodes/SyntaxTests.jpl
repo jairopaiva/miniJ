@@ -28,5 +28,9 @@ namespace namespace_1.Tey // Comentario namespace
 	class Object
 	{
 		public int bla;
+		
+		public Object(int initialBla){
+		bla = initialBla;
+		}
 	}
 }

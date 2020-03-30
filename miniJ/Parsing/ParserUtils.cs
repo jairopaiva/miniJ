@@ -10,6 +10,9 @@ namespace miniJ.Parsing
 {
     class ParserUtils
     {
+
+        public const string CONSTRUCTOR_NAME = ".ctor";
+
         public static readonly TokenType[] AllCISETokens = { TokenType.Keyword_Class, TokenType.Keyword_Interface, TokenType.Keyword_Struct, TokenType.Keyword_Enum };
         public static readonly TokenType[] AllAccessTokens = { TokenType.AccessModifier_Private, TokenType.AccessModifier_Protected, TokenType.AccessModifier_Public };
         public static readonly TokenType[] AllBuiltInTokens = { TokenType.BuiltInType_Bool , TokenType.BuiltInType_Byte, TokenType.BuiltInType_Char, TokenType.BuiltInType_Double,

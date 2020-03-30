@@ -8,6 +8,7 @@ namespace miniJ.Lexical
     public static class LexerUtils
     {
         public const char NEWLINE = '\n';
+        public const char TAB_CHAR = '\t';
         public const char UNDERLINE = '_';
         public static readonly char[] HEX_SIGNAL = { '0', 'x' };
 
