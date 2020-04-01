@@ -4,6 +4,7 @@ using miniJ.Grammar;
 using miniJ.Lexical;
 using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing;
+using miniJ.Parsing.Elements;
 using System;
 using System.Collections.Generic;
 
@@ -18,11 +19,11 @@ namespace miniJ.Helpers
         public static Project Project;
         public static Dictionary<string, Token> tokenDatabase;   // Dicionário contendo os tokens padrões da linguagem
 
-        public static LexerResult lexerResult;
+        public static CompilationElements compilationElements;
         public static void Compile()
         {
             LexicalProcess();
-            List<CodeError> detectedErrors = PreProcessor.Start(lexerResult, GlobalNamespace);
+            List<CodeError> detectedErrors = PreProcessor.Start(compilationElements.LexerResult, GlobalNamespace);
             Logger.Log("", PreProcessor);
 
             if (detectedErrors.Count != 0)
@@ -43,18 +44,18 @@ namespace miniJ.Helpers
 
         public static void LexicalProcess()
         {
-            lexerResult = new LexerResult();
+            compilationElements.LexerResult = new LexerResult();
             foreach (Folder folder in Project.Folders)
             {
                 foreach (File file in folder.Files)
                 {
-                    LexerResult scanResult = Lexer.Scan(folder.Path + file.Name);
-                    lexerResult.lexerTokenCollection.AddRange(scanResult.lexerTokenCollection);
-                    lexerResult.cisesDetectedInLexer.AddRange(scanResult.cisesDetectedInLexer);
+                    Lexer.Scan(folder.Path + file.Name, compilationElements.LexerResult);
                 }
             }
-            Token lastLexerToken = lexerResult.lexerTokenCollection[lexerResult.lexerTokenCollection.Count - 1];
-            lexerResult.lexerTokenCollection.Add(Delimiters.EOF.Copy(lastLexerToken.Location));
+
+            compilationElements.LexerResult.SetAllTypeIdentifiers();
+            Token lastLexerToken = compilationElements.LexerResult.Tokens[compilationElements.LexerResult.Tokens.Count - 1];
+            compilationElements.LexerResult.Tokens.Add(Delimiters.EOF.Copy(lastLexerToken.Location));
         }
 
         public static void Reset()
@@ -77,6 +78,7 @@ namespace miniJ.Helpers
 
         private static void SetUpLexer()
         {
+            compilationElements = new CompilationElements();
             Lexer = new Lexer(tokenDatabase);
         }
 

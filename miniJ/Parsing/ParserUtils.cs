@@ -58,7 +58,7 @@ namespace miniJ.Parsing
             return builder.ToString();
         }
 
-        public static bool IsType(Token token)
+        public static bool IsType(Token token, List<CISE> cises)
         {
             switch (token.TokenType)
             {
@@ -77,13 +77,13 @@ namespace miniJ.Parsing
                 case TokenType.Keyword_Auto:
                     return true;
                 default:
-                    if (Helpers.Global.lexerResult.cisesDetectedInLexer.Exists(cise => cise.Name == token.Value))
+                    if (cises.Exists(cise => cise.Name == token.Value))
                         return true;
                     return false;
             }
         }   
 
-        public static bool IsTypeOrModifierRelatedToType(Token token)
+        public static bool IsTypeOrModifierRelatedToType(Token token, List<CISE> cises)
         {
             switch (token.TokenType)
             {
@@ -94,7 +94,7 @@ namespace miniJ.Parsing
                 case TokenType.Keyword_Static:
                     return true;
                 default:
-                    return IsType(token);
+                    return IsType(token,cises);
             }
         }
 

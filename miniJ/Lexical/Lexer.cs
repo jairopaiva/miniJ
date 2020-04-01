@@ -22,93 +22,83 @@ namespace miniJ.Lexical
         public Lexer(Dictionary<string, Token> tokenDatabase)
         {
             _tokenDatabase = tokenDatabase;
-            lexerResult = new LexerResult();
         }
 
         // Para cada arquivo processado, estas variáveis são 'resetadas'
-        
         private CISE.SpecificTypeOfCISE _nextTokenCISEType;
-        public StringReader Reader;
         private bool _nextTokenCISEIdentifier;
         private string _currentSourceCode;
-        private LexerResult lexerResult;
         private string _currentFile;
-        
-        
+        private StringReader _reader;
 
-        public LexerResult Scan(string filePath)
+        public void Scan(string filePath, LexerResult lexerResult)
         {
             _currentSourceCode = System.IO.File.ReadAllText(filePath);
-            Reader = new StringReader(_currentSourceCode);
-            List<Token> tokens = new List<Token>();
+            _reader = new StringReader(_currentSourceCode);
             _nextTokenCISEIdentifier = false;
-            lexerResult = new LexerResult();
             _currentFile = filePath;
 
-            while (Reader.Peek() != -1)
+            while (_reader.Peek() != -1)
             {
-                char curChar = (char)Reader.Peek();
+                char curChar = (char)_reader.Peek();
 
                 if (LexerUtils.IsNewLine(curChar))
                 {
-                    Reader.NewLine();
-                    Reader.Read();
+                    _reader.NewLine();
+                    _reader.Read();
                 }
                 else if (char.IsWhiteSpace(curChar) || curChar == LexerUtils.TAB_CHAR)
                 {
                     if (curChar == LexerUtils.TAB_CHAR)
                     {
-                        Reader.Read();
-                        Reader.Column += 3;
+                        _reader.Read();
+                        _reader.Column += 3;
                     }
                     else
                     {
-                        Reader.Read();
+                        _reader.Read();
                     }
                 }
                 else if (char.IsLetter(curChar) || curChar == LexerUtils.UNDERLINE)
                 {
-                    ParseLetter(ref tokens);
+                    ParseLetter(ref lexerResult);
                 }
                 else if (char.IsDigit(curChar))
                 {
-                    ParseNumber(ref tokens);
+                    ParseNumber(ref lexerResult);
                 }
                 else if (curChar == Directives.Define.Value[0])
                 {
-                    ParseDirective(ref tokens);
+                    ParseDirective(ref lexerResult);
                 }
                 else if (LexerUtils.IsOperatorOrComparator(curChar.ToString()))
                 {
-                    ParseSymbolOrOperator(ref tokens);
+                    ParseSymbolOrOperator(ref lexerResult);
                 }
                 else if (curChar == Delimiters.CharAssigment.Value[0])
                 {
-                    ParseCharAssigment(ref tokens);
+                    ParseCharAssigment(ref lexerResult);
                 }
                 else if (curChar == Delimiters.StringAssigment.Value[0])
                 {
-                    ParseStringAssigment(ref tokens);
+                    ParseStringAssigment(ref lexerResult);
                 }
                 else
                     try
                     {
-                        AddToken(curChar.ToString(), Reader.Column, ref tokens);
-                        Reader.Read();
+                        AddToken(curChar.ToString(), _reader.Column, ref lexerResult);
+                        _reader.Read();
                     }
                     catch (Exception)
                     {
                         throw;
                     }
             }
-
-            lexerResult.lexerTokenCollection.AddRange(tokens);
-            return lexerResult;
         }
 
-        private void AddToken(string Value, int startPos, ref List<Token> tokens, TokenType specificTokenType = TokenType.NotDef_None)
+        private void AddToken(string Value, int startPos, ref LexerResult lexerResult, TokenType specificTokenType = TokenType.NotDef_None)
         {
-            NodeLocation location = new NodeLocation() { Column = startPos, Line = Reader.Line, File = _currentFile };
+            NodeLocation location = new NodeLocation() { Column = startPos, Line = _reader.Line, File = _currentFile };
             Token token = new Token(Value) { Location = location, TokenType = specificTokenType }; ;
 
             if (_tokenDatabase.ContainsKey(Value))
@@ -136,33 +126,33 @@ namespace miniJ.Lexical
                     }
                     else
                     {
-                        token.TokenType = TokenType.NotDef_TypeIdentifier;
+                        token.TokenType = TokenType.NotDef_Identifier;
                         CISE cise = new CISE(token, _nextTokenCISEType, token);
-                        lexerResult.cisesDetectedInLexer.Add(cise);
+                        lexerResult.CISES.Add(cise);
                         _nextTokenCISEIdentifier = false;
                     }
                 }
             }
 
             //  Global.Logger.Log(token.ToString(), this);
-            tokens.Add(token);
+            lexerResult.Tokens.Add(token);
         }
 
-        private void ParseCharAssigment(ref List<Token> tokens)
+        private void ParseCharAssigment(ref LexerResult lexerResult)
         {
-            int start = Reader.Column;
-            Reader.Read();
-            char curChar = (char)Reader.Peek();
+            int start = _reader.Column;
+            _reader.Read();
+            char curChar = (char)_reader.Peek();
             StringBuilder builder = new StringBuilder();
 
             while (curChar != Delimiters.CharAssigment.Value[0])
             {
                 builder.Append(curChar);
-                Reader.Read();
+                _reader.Read();
 
-                if (Reader.Peek() != -1)
+                if (_reader.Peek() != -1)
                 {
-                    curChar = (char)Reader.Peek();
+                    curChar = (char)_reader.Peek();
                 }
                 else
                 {
@@ -170,29 +160,29 @@ namespace miniJ.Lexical
                 }
             }
 
-            Reader.Read();
+            _reader.Read();
 
-            AddToken(builder.ToString(), start, ref tokens, TokenType.NotDef_Char);
+            AddToken(builder.ToString(), start, ref lexerResult, TokenType.NotDef_Char);
         }
 
-        private void ParseDirective(ref List<Token> tokens)
+        private void ParseDirective(ref LexerResult lexerResult)
         {
-            char curChar = (char)Reader.Read();
+            char curChar = (char)_reader.Read();
 
-            int start = Reader.Column;
+            int start = _reader.Column;
             StringBuilder builder = new StringBuilder();
             builder.Append(curChar); // Escreve o símbolo '#' para que a função AddToken saiba de que se trata de um Token do tipo Directive
 
-            curChar = (char)Reader.Peek();
+            curChar = (char)_reader.Peek();
 
             while (char.IsLetter(curChar))
             {
                 builder.Append(curChar);
-                Reader.Read();
+                _reader.Read();
 
-                if (Reader.Peek() != -1)
+                if (_reader.Peek() != -1)
                 {
-                    curChar = (char)Reader.Peek();
+                    curChar = (char)_reader.Peek();
                 }
                 else
                 {
@@ -200,24 +190,24 @@ namespace miniJ.Lexical
                 }
             }
 
-            AddToken(builder.ToString(), start, ref tokens);
+            AddToken(builder.ToString(), start, ref lexerResult);
         }
 
-        private void ParseLetter(ref List<Token> tokens)
+        private void ParseLetter(ref LexerResult lexerResult)
         {
-            char curChar = (char)Reader.Peek();
+            char curChar = (char)_reader.Peek();
             StringBuilder builder = new StringBuilder();
 
-            int start = Reader.Column;
+            int start = _reader.Column;
 
             while (char.IsLetterOrDigit(curChar) || curChar == LexerUtils.UNDERLINE)
             {
                 builder.Append(curChar);
-                Reader.Read();
+                _reader.Read();
 
-                if (Reader.Peek() != -1)
+                if (_reader.Peek() != -1)
                 {
-                    curChar = (char)Reader.Peek();
+                    curChar = (char)_reader.Peek();
                 }
                 else
                 {
@@ -225,34 +215,34 @@ namespace miniJ.Lexical
                 }
             }
 
-            AddToken(builder.ToString(), start, ref tokens);
+            AddToken(builder.ToString(), start, ref lexerResult);
         }
 
-        private void ParseNumber(ref List<Token> tokens)
+        private void ParseNumber(ref LexerResult lexerResult)
         {
-            int start = Reader.Column;
-            char curChar = (char)Reader.Peek();
+            int start = _reader.Column;
+            char curChar = (char)_reader.Peek();
 
             StringBuilder builder = new StringBuilder();
 
-            Reader.Reset();
-            Reader.Next();
+            _reader.Reset();
+            _reader.Next();
 
-            bool hexNumber = curChar == LexerUtils.HEX_SIGNAL[0] && (char)Reader.PeekTemp() == LexerUtils.HEX_SIGNAL[1];
+            bool hexNumber = curChar == LexerUtils.HEX_SIGNAL[0] && (char)_reader.PeekTemp() == LexerUtils.HEX_SIGNAL[1];
 
             if (hexNumber)
             {
-                Reader.Read();
-                Reader.Read();
-                curChar = (char)Reader.Peek();
+                _reader.Read();
+                _reader.Read();
+                curChar = (char)_reader.Peek();
                 while (LexerUtils.HexChar(curChar))
                 {
                     builder.Append(curChar);
-                    Reader.Read();
+                    _reader.Read();
 
-                    if (Reader.Peek() != -1)
+                    if (_reader.Peek() != -1)
                     {
-                        curChar = (char)Reader.Peek();
+                        curChar = (char)_reader.Peek();
                     }
                     else
                     {
@@ -269,11 +259,11 @@ namespace miniJ.Lexical
                 while (char.IsDigit(curChar) || curChar == Delimiters.Dot.Value[0])
                 {
                     builder.Append(curChar);
-                    Reader.Read();
+                    _reader.Read();
 
-                    if (Reader.Peek() != -1)
+                    if (_reader.Peek() != -1)
                     {
-                        curChar = (char)Reader.Peek();
+                        curChar = (char)_reader.Peek();
                     }
                     else
                     {
@@ -290,24 +280,24 @@ namespace miniJ.Lexical
                 }
             }
 
-            AddToken(builder.ToString(), start, ref tokens, TokenType.NotDef_Number);
+            AddToken(builder.ToString(), start, ref lexerResult, TokenType.NotDef_Number);
         }
 
-        private void ParseStringAssigment(ref List<Token> tokens)
+        private void ParseStringAssigment(ref LexerResult lexerResult)
         {
-            int start = Reader.Column;
-            Reader.Read();
-            char curChar = (char)Reader.Peek();
+            int start = _reader.Column;
+            _reader.Read();
+            char curChar = (char)_reader.Peek();
             StringBuilder builder = new StringBuilder();
 
             while (curChar != Delimiters.StringAssigment.Value[0])
             {
                 builder.Append(curChar);
-                Reader.Read();
+                _reader.Read();
 
-                if (Reader.Peek() != -1)
+                if (_reader.Peek() != -1)
                 {
-                    curChar = (char)Reader.Peek();
+                    curChar = (char)_reader.Peek();
                 }
                 else
                 {
@@ -315,21 +305,21 @@ namespace miniJ.Lexical
                 }
             }
 
-            Reader.Read();
+            _reader.Read();
 
-            AddToken(builder.ToString(), start, ref tokens, TokenType.NotDef_String);
+            AddToken(builder.ToString(), start, ref lexerResult, TokenType.NotDef_String);
         }
 
-        private void ParseSymbolOrOperator(ref List<Token> tokens)
+        private void ParseSymbolOrOperator(ref LexerResult lexerResult)
         {
-            string curChar = ((char)Reader.Peek()).ToString();
-            Reader.Reset(); Reader.Next();
+            string curChar = ((char)_reader.Peek()).ToString();
+            _reader.Reset(); _reader.Next();
             if (curChar == Operators.Division.Value &&
-                ((char)Reader.PeekTemp()).ToString() == Operators.Division.Value) // Se trata de um comentário
+                ((char)_reader.PeekTemp()).ToString() == Operators.Division.Value) // Se trata de um comentário
             {
-                while (!LexerUtils.IsNewLine((char)Reader.Peek()))
+                while (!LexerUtils.IsNewLine((char)_reader.Peek()))
                 {
-                    if (Reader.Read() == -1)
+                    if (_reader.Read() == -1)
                         break;
                 }
                 return;
@@ -337,16 +327,16 @@ namespace miniJ.Lexical
 
             StringBuilder builder = new StringBuilder();
 
-            int start = Reader.Column;
+            int start = _reader.Column;
 
             while (LexerUtils.IsOperatorOrComparator(curChar))
             {
                 builder.Append(curChar);
-                Reader.Read();
+                _reader.Read();
 
-                if (Reader.Peek() != -1)
+                if (_reader.Peek() != -1)
                 {
-                    curChar = ((char)Reader.Peek()).ToString();
+                    curChar = ((char)_reader.Peek()).ToString();
                 }
                 else
                 {
@@ -354,20 +344,8 @@ namespace miniJ.Lexical
                 }
             }
 
-            AddToken(builder.ToString(), start, ref tokens);
+            AddToken(builder.ToString(), start, ref lexerResult);
         }
 
-    }
-
-    class LexerResult
-    {
-        public List<Token> lexerTokenCollection;
-        public List<CISE> cisesDetectedInLexer;
-
-        public LexerResult()
-        {
-            lexerTokenCollection = new List<Token>();
-            cisesDetectedInLexer = new List<CISE>();
-        }
     }
 }

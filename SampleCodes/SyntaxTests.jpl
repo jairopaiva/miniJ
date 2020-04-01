@@ -1,36 +1,24 @@
-namespace namespace_1.Tey // Comentario namespace
+class Bla
 {
-    public class SyntaxTests
-    {
-		public class TEY_SYNTAXTESTS_STRUCT_Test
-		{
-			public static const int imutableInteger, blaInteger = 666; // Comentario aleatorio
-			public const int constantInteger1, constantInteger2 = 745;
-		}
-	}
-	
-	namespace NamespaceInsideTey
-	{
-		public class InsideTeyTest
-		{
-			public int[] constIntArray;
-		}
-	}
-	
-	namespace bla
-	{
-		public class InsideTeyTest
-		{
-			public int[] constIntArray;
-		}
-	}
-	
+	public Object objeto;
+}
+
+namespace System
+{
 	class Object
 	{
-		public int bla;
-		
-		public Object(int initialBla){
-		bla = initialBla;
+	
+		public Object(){}
+		public static bool Equals(Object objA, Object objB) 
+		{
+        if (objA==objB) {
+            return true;
+        }
+        if (objA==null || objB==null) {
+            return false;
+        }
+        return objA.Equals(objB);
 		}
-	}
+		
+	}	
 }

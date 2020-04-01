@@ -1,5 +1,6 @@
 ﻿using miniJ.Elements;
 using miniJ.Elements.Base;
+using miniJ.Helpers;
 using miniJ.Lexical;
 using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing.Elements;
@@ -41,7 +42,7 @@ namespace miniJ.Parsing
             detectedErrors = new List<CodeError>();
             _globalNamespace = globalNamespace;
             lexerResult = LexerResult;
-            reader = new TokenReader(lexerResult.lexerTokenCollection);
+            reader = new TokenReader(lexerResult.Tokens);
             ProcessNamespaceBody(_globalNamespace);
             return detectedErrors;
         }
@@ -325,7 +326,7 @@ namespace miniJ.Parsing
                 {
                     ProcessAccessModifier(true);
                 }
-                else if (ParserUtils.IsTypeOrModifierRelatedToType(curToken)) // Um DataType ou um modificador relacionado
+                else if (ParserUtils.IsTypeOrModifierRelatedToType(curToken, lexerResult.CISES)) // Um DataType ou um modificador relacionado
                 {
                     bool Virtual = false;
                     DataType type = ParseDataType(out Virtual);
@@ -420,7 +421,7 @@ namespace miniJ.Parsing
 
             int firstModifierIndex = reader.Position;
             
-            while (!ParserUtils.IsType(curToken))
+            while (!ParserUtils.IsType(curToken, lexerResult.CISES))
             {
                 switch (curToken.TokenType)
                 {
@@ -468,7 +469,7 @@ namespace miniJ.Parsing
             {
                 dataType = new ObjectDataType(curToken)
                 {
-                    CISE = lexerResult.cisesDetectedInLexer.Find(cise => cise.Name == curToken.Value)
+                    CISE = lexerResult.CISES.Find(cise => cise.Name == curToken.Value)
                 };
             }
             else 
