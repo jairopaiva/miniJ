@@ -1,6 +1,6 @@
 ﻿namespace miniJ.Parsing.Elements.DataTypes
 {
-    struct DataTypeConfiguration
+    public struct DataTypeConfiguration
     {
         public bool Array;
         public bool Constant;

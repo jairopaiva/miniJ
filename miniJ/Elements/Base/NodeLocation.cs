@@ -1,6 +1,6 @@
 ﻿namespace miniJ.Lexical.Elements.Token
 {
-     struct NodeLocation
+    public struct NodeLocation
     {
         public int Column;
         public string File;

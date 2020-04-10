@@ -3,9 +3,9 @@ using miniJ.Lexical.Elements.Token;
 
 namespace miniJ.Parsing.Elements
 {
-    class AssignmentExpression : Expression
+    public class AssignmentExpression : Expression
     {
-        public ISyntaxNode ParentNode;
+        public SyntaxNode ParentNode;
         public AssignmentExpression(Token origin) : base(origin)
         {
         }

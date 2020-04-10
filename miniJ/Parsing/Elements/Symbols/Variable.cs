@@ -2,12 +2,12 @@
 using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing.Elements.DataTypes;
 
-namespace miniJ.Parsing.Elements
+namespace miniJ.Parsing.Elements.Symbols
 {
     /// <summary>
     /// Inside method
     /// </summary>
-    class Variable : ISyntaxNode
+    public class Variable : SyntaxNode
     {
         public string Name;
         public DataType Type;

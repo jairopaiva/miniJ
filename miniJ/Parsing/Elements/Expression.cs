@@ -4,13 +4,13 @@ using System.Collections.Generic;
 
 namespace miniJ.Parsing.Elements
 {
-    class Expression : ISyntaxNode
+    public class Expression : SyntaxNode
     {
         public Expression(Token origin) : base(origin)
         {
-            Nodes = new List<ISyntaxNode>();
+            Nodes = new List<SyntaxNode>();
         }
 
-        public List<ISyntaxNode> Nodes;
+        public List<SyntaxNode> Nodes;
     }
 }

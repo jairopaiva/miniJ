@@ -1,13 +1,14 @@
 ﻿using miniJ.Elements;
 using miniJ.Elements.Base;
+using miniJ.Elements.Base.CompilationElements;
+using miniJ.Elements.Base.Error;
 using miniJ.Helpers;
-using miniJ.Lexical;
 using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing.Elements;
 using miniJ.Parsing.Elements.DataTypes;
+using miniJ.Parsing.Elements.Symbols;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace miniJ.Parsing
 {
@@ -19,13 +20,11 @@ namespace miniJ.Parsing
     class PreProcessor : ICompilerNode
     {
         private AccessModifierNode _accessModifier;
-        private Namespace _globalNamespace;
-        private LexerResult lexerResult;
+        private CompilationUnit _compilationUnit;
         private TokenReader reader;
-        public Token curToken;
+        private Token curToken;
 
-        private List<CodeError> detectedErrors;
-        private List<Token> _bracketsInCode;
+        private readonly List<Token> _bracketsInCode;
         private int _openedBlocks;
         private int _closedBlock;
 
@@ -37,14 +36,12 @@ namespace miniJ.Parsing
             _closedBlock = 0;
         }
 
-        public List<CodeError> Start(LexerResult LexerResult, Namespace globalNamespace)
+        public void Start(ref CompilationUnit compilationUnit)
         {
-            detectedErrors = new List<CodeError>();
-            _globalNamespace = globalNamespace;
-            lexerResult = LexerResult;
-            reader = new TokenReader(lexerResult.Tokens);
-            ProcessNamespaceBody(_globalNamespace);
-            return detectedErrors;
+            compilationUnit.LexerResult.SetAllTypeIdentifiers();
+            _compilationUnit = compilationUnit;
+            reader = new TokenReader(_compilationUnit.LexerResult.Tokens);
+            ProcessNamespaceBody(_compilationUnit.GlobalNamespace);
         }
 
         private void ProcessNamespaceBody(Namespace currentNamespace)
@@ -64,7 +61,7 @@ namespace miniJ.Parsing
                 {
                     if (currentNamespace.Open)
                     {
-                        if (currentNamespace.Name != _globalNamespace.Name)
+                        if (currentNamespace.Name != _compilationUnit.GlobalNamespace.Name)
                         {
                             currentNamespace.Open = false;
                             Log(currentNamespace.ToString(), LogInfo.Created);
@@ -73,19 +70,19 @@ namespace miniJ.Parsing
                         }
                         else
                         {
-                            Error(CodeError.INVALID_TOKEN, curToken, TokenType.Keyword_Namespace, TokenType.Delimiter_EOF);
+                            Error(ErrorMessages.INVALID_TOKEN, curToken, ErrorLocation.NamespaceBody, currentNamespace);
                         }
                     }
                     else
                     {
                         int lastBeforeThis = _bracketsInCode.Count - 2;
-                        Error(CodeError.NAMESPACE_ALREADY_CLOSED + _bracketsInCode[lastBeforeThis].Location.ToString()
-                                                        ,curToken, TokenType.Keyword_Namespace, TokenType.Delimiter_EOF);
+                        Error(ErrorMessages.NAMESPACE_ALREADY_CLOSED + _bracketsInCode[lastBeforeThis].Location.ToString()
+                            , curToken, ErrorLocation.NamespaceBody, currentNamespace);
                     }
                 }
                 else if (curToken.IsToken(Token.ACCESS_MODIFIER))
                 {
-                    ProcessAccessModifier(false);
+                    ProcessAccessModifier(currentNamespace);
                 }
                 else if (ParserUtils.IsCISE(curToken))
                 {
@@ -93,22 +90,9 @@ namespace miniJ.Parsing
                 }
                 else
                 {
-                    List<TokenType> expectedToken = new List<TokenType>();
-
-                    if (_accessModifier != null)
-                    {
-                        expectedToken.Add(TokenType.Delimiter_CBlock);
-                        _accessModifier = null;
-                    }
-                    else
-                    {
-                        expectedToken.AddRange(ParserUtils.AllAccessTokens);
-                    }
-
-                    expectedToken.Add(TokenType.Delimiter_EOF);
-                    expectedToken.Add(TokenType.Keyword_Namespace);
-                    expectedToken.AddRange(ParserUtils.AllCISETokens);
-                    Expected_Token(expectedToken.ToArray(), expectedToken.ToArray());
+                    Error("Expected namespace, modifier, type declaration or EOF.", curToken, ErrorLocation.NamespaceBody
+                         , currentNamespace, false);
+                    NextToken();
                 }
             }
         }
@@ -118,18 +102,16 @@ namespace miniJ.Parsing
             Token origin = curToken;
             NextToken(); // namespace
             Namespace curGlobal = currentNamespace.Clone();
-            new List<Token>();
 
-            if (!Expected_Token(TokenType.NotDef_Identifier, UnionTokenTypes(TokenType.Keyword_Namespace, ParserUtils.AllAccessTokens, ParserUtils.AllCISETokens)))
+            if (!Expected_Token(TokenType.NotDef_Identifier, ErrorLocation.NamespaceBody, currentNamespace))
             {
                 return; // Algum erro ocorreu, então retormos a estaca 0
             }
 
             List<Token> namespaceName = ProcessNamespaceName(TokenType.Delimiter_OBlock);
 
-            if (!Expected_Token(TokenType.Delimiter_OBlock, UnionTokenTypes(TokenType.Keyword_Namespace, ParserUtils.AllAccessTokens, ParserUtils.AllCISETokens)))
+            if (!Expected_Token(TokenType.Delimiter_OBlock, ErrorLocation.NamespaceBody, currentNamespace))
             {
-                Error("Invalid namespace name!", curToken, UnionTokenTypes(TokenType.Keyword_Namespace, ParserUtils.AllAccessTokens, ParserUtils.AllCISETokens));
                 return; // Algum erro ocorreu, então retormos a estaca 0
             }
 
@@ -144,9 +126,9 @@ namespace miniJ.Parsing
                     Namespace newN = new Namespace(origin, curGlobal);
                     newN.Name = nameToken.Value;
 
-                    if (curGlobal.Name == _globalNamespace.Name)
+                    if (curGlobal.Name == _compilationUnit.GlobalNamespace.Name)
                     {
-                        _globalNamespace.Childs.Add(newN);
+                        _compilationUnit.GlobalNamespace.Childs.Add(newN);
                     }
                     else
                     {
@@ -159,19 +141,19 @@ namespace miniJ.Parsing
 
             Log(curGlobal.ToString(), LogInfo.Detected);
 
-            Expected_Token(TokenType.Delimiter_OBlock, UnionTokenTypes(TokenType.Delimiter_OBlock, ParserUtils.AllCISETokens, ParserUtils.AllAccessTokens));
+            Expected_Token(TokenType.Delimiter_OBlock, ErrorLocation.NamespaceDclr, curGlobal);
 
             NextToken(); // {
             if (curToken.TokenType == TokenType.Delimiter_CBlock) // Namespace vazio
             {
-                Error("Cannot declare empthy namespaces!", curToken);
+                Error("Cannot declare empthy namespaces!", curToken, ErrorLocation.NamespaceDclr, curGlobal);
             }
 
 
             ProcessNamespaceBody(curGlobal);
         }
 
-        private void ProcessAccessModifier(bool insideCISE)
+        private void ProcessAccessModifier(SyntaxNode calledFromNode)
         {
             if (_accessModifier == null) // Esperado, caso contrário, algo deu errado previamente
             {
@@ -184,8 +166,7 @@ namespace miniJ.Parsing
             {
                 _accessModifier = null;
                 Debug(true, "tey:");
-                Error("More than one access modifier for the same object.", curToken, 
-                      UnionTokenTypes(ParserUtils.AllAccessTokens, ParserUtils.AllBuiltInTokens, ParserUtils.AllCISETokens));
+                Error("More than one access modifier for the same object.", curToken, ErrorLocation.AccessModifier, calledFromNode);
                 Debug(true, "blalala:");
             }
         }
@@ -256,15 +237,16 @@ namespace miniJ.Parsing
         /// <param name="cise">Quando este parâmetro é diferente de null, quer dizer que a classe a ser processada foi declarada dentro de um CISE</param>
         private void ProcessClass(Namespace currentNamespace, CISE cise = null)
         {
+            Token origin = curToken;
             NextToken(); // class
 
-            if (!Expected_Token(TokenType.NotDef_TypeIdentifier, UnionTokenTypes(ParserUtils.AllCISETokens, TokenType.Keyword_Namespace)))
+            if (!Expected_Token(TokenType.NotDef_TypeIdentifier, ErrorLocation.CISEsDclr, currentNamespace))
             {
                 _accessModifier = null;
                 return;
             }
 
-            Class Classe = new Class(curToken, curToken);
+            Class Classe = new Class(curToken, origin);
             Classe.AccessModifier = GetAccessModifier(SpecificAccessModifier.PRIVATE);
             Classe.Namespace = currentNamespace;
 
@@ -286,50 +268,55 @@ namespace miniJ.Parsing
                 }
                 else // Erro, pois já existe uma classe com mesmo nome dentro do namespace
                 {
-                    Error("Already exists an class with same name inside the namespace '" + currentNamespace.Name + "'.", curToken);
+                    Error("Already exists an class with same name inside the namespace '" + currentNamespace.Name + "'.", curToken, ErrorLocation.CISEsDclr, Classe);
                     return;
                 }
             }
             else             // Esta sendo declarado "dentro" de um outro CISE
             {
                 Classe.Root = cise;
-                if(!cise.Children.Exists(c => c.Name == Classe.Name))
+                if (!cise.Children.Exists(c => c.Name == Classe.Name))
                 {
                     cise.Children.Add(Classe);
                     Log(Classe.ToString(), LogInfo.Detected);
                 }
                 else // Erro, pois já existe uma classe com mesmo nome dentro da classe raiz
                 {
-                    Error("Already exists an class with same name inside the class '" + cise.Name + "'.", curToken);
+                    Error("Already exists an class with same name inside the class '" + cise.Name + "'.", curToken, ErrorLocation.CISEsDclr, Classe);
                     return;
                 }
             }
 
-            ProcessClassBody(Classe, cise);
+           if(ProcessClassBody(Classe))
+            {
+                NextToken(); // }
+            }
+            else
+            {
+               // Debug();
+            }
 
             Log(Classe.ToString(), LogInfo.Created);
-            NextToken(); // }
         }
 
-        private void ProcessClassBody(Class toClass, CISE fromCISE = null)
+        private bool ProcessClassBody(Class toClass)
         {
             Log(toClass.Name + " body.", LogInfo.Processing);
-            Expected_Token(TokenType.Delimiter_OBlock, UnionTokenTypes(ParserUtils.AllAccessTokens, 
-                                                                       ParserUtils.AllBuiltInTokens,
-                                                                       TokenType.NotDef_TypeIdentifier,
-                                                                       ParserUtils.AllCISETokens));
+            Expected_Token(TokenType.Delimiter_OBlock, ErrorLocation.CISEsBody, toClass, false);
             NextToken(); // {
+
+            bool noErrors = true;
 
             while (curToken.TokenType != TokenType.Delimiter_CBlock)
             {
                 if (curToken.IsToken(Token.ACCESS_MODIFIER))
                 {
-                    ProcessAccessModifier(true);
+                    ProcessAccessModifier(toClass);
                 }
-                else if (ParserUtils.IsTypeOrModifierRelatedToType(curToken, lexerResult.CISES)) // Um DataType ou um modificador relacionado
+                else if (ParserUtils.IsTypeOrModifierRelatedToType(curToken, _compilationUnit)) // Um DataType ou um modificador relacionado
                 {
                     bool Virtual = false;
-                    DataType type = ParseDataType(out Virtual);
+                    DataType type = ParseDataType(out Virtual, toClass);
 
                     if (type == null) // Ocorreu algum erro
                     {
@@ -337,22 +324,22 @@ namespace miniJ.Parsing
                         continue;
                     }
 
-                    if(curToken.TokenType == TokenType.Delimiter_OParenthesis) // Construtor
+                    if (curToken.TokenType == TokenType.Delimiter_OParenthesis) // Construtor
                     {
-                        ParseMethod(ParserUtils.CONSTRUCTOR_NAME, type, toClass, Virtual);
+                        toClass.Constructor = ParseMethod(ParserUtils.CONSTRUCTOR_NAME, type, toClass, Virtual);
                         continue;
                     }
 
                     List<Token> names = new List<Token>();
                     bool openComma = false;
-                    while(curToken.TokenType == TokenType.NotDef_Identifier || curToken.TokenType == TokenType.Delimiter_Comma)
+                    while (curToken.TokenType == TokenType.NotDef_Identifier || curToken.TokenType == TokenType.Delimiter_Comma)
                     {
-                        if(curToken.TokenType == TokenType.NotDef_Identifier)
+                        if (curToken.TokenType == TokenType.NotDef_Identifier)
                         {
                             names.Add(curToken);
                             openComma = false;
                         }
-                        else if(curToken.TokenType == TokenType.Delimiter_Comma)
+                        else if (curToken.TokenType == TokenType.Delimiter_Comma)
                         {
                             openComma = true;
                         }
@@ -366,7 +353,7 @@ namespace miniJ.Parsing
 
                     if (openComma)
                     {
-                        Error("Expected variable name.", curToken);
+                        Error("Expected variable name.", curToken, ErrorLocation.CISEsBody, toClass);
                     }
 
                     switch (curToken.TokenType)
@@ -375,10 +362,10 @@ namespace miniJ.Parsing
                             {
                                 if (names.Count > 1)
                                 {
-                                    Error("Invalid method name.", names[1]);
+                                    Error("Invalid method name.", names[1], ErrorLocation.CISEsBody, toClass);
                                 }
 
-                                ParseMethod(names[0].Value, type, toClass, Virtual);
+                                toClass.Methods.Add(ParseMethod(names[0].Value, type, toClass, Virtual));
                                 break;
                             }
                         case TokenType.Operator_Equal: // Declarando uma variável
@@ -386,10 +373,10 @@ namespace miniJ.Parsing
                             {
                                 if (Virtual)
                                 {
-                                    Error(CodeError.INVALID_MEMBER_MODIFIER, names[0]);
+                                    Error(ErrorMessages.INVALID_MEMBER_MODIFIER, names[0], ErrorLocation.CISEsBody, toClass);
                                 }
 
-                                ParseVariableDeclaration(names, type, false);
+                                toClass.Fields.AddRange(Field.Convert(ParseVariableDeclaration(names, type, toClass), GetAccessModifier(SpecificAccessModifier.PRIVATE)));
                                 break;
                             }
                         default:
@@ -402,26 +389,34 @@ namespace miniJ.Parsing
                 }
                 else
                 {
-                    throw new Exception(curToken.ToString());
+                    bool panic = curToken.TokenType == TokenType.Keyword_Namespace;
+                    Expected_Token(TokenType.Delimiter_CBlock, ErrorLocation.CISEsBody, toClass, panic);
+                    noErrors = false;
+
+                    if (panic)
+                    {
+                        break;
+                    }
                 }
             }
 
             Log(toClass.Name + " body.", LogInfo.Created);
+            return noErrors;
         }
-        private DataType ParseDataType(out bool Virtual)
+        private DataType ParseDataType(out bool Virtual, SyntaxNode calledFromNode)
         {
             DataType dataType;
 
             byte dataTypeAssignedSpecs = 0; // Conta quanto dessas variáveis bool abaixo foram assinaladas como true
             bool Constant = false; // <-- Por padrão, todos os objetos são variáveis
-            bool ReadOnly = false; 
-            bool Volatile = false; 
+            bool ReadOnly = false;
+            bool Volatile = false;
             bool Static = false;
             Virtual = false;
 
             int firstModifierIndex = reader.Position;
-            
-            while (!ParserUtils.IsType(curToken, lexerResult.CISES))
+
+            while (!ParserUtils.IsType(curToken, _compilationUnit.LexerResult.CISES))
             {
                 switch (curToken.TokenType)
                 {
@@ -455,24 +450,22 @@ namespace miniJ.Parsing
                 }
             }
 
-            if (dataTypeAssignedSpecs > 1)
+            if (dataTypeAssignedSpecs > 1 && (!Static || Virtual))
             {
-                if (!Static || Virtual)
-                {
-                    Error("You can only have one signature modifier per type! Modifiers: "
-                        + ParserUtils.GetSignatureModifiers(Constant, ReadOnly, Volatile, Static, Virtual) + ".", reader[firstModifierIndex + 1]);
-                    return null;
-                }
+                Error("You can only have one signature modifier per type! Modifiers: "
+                    + ParserUtils.GetSignatureModifiers(Constant, ReadOnly, Volatile, Static, Virtual) + ".", reader[firstModifierIndex + 1]
+                    , ErrorLocation.DataType, calledFromNode);
+                return null;
             }
 
             if (curToken.TokenType == TokenType.NotDef_TypeIdentifier)
             {
                 dataType = new ObjectDataType(curToken)
                 {
-                    CISE = lexerResult.CISES.Find(cise => cise.Name == curToken.Value)
+                    // CISE = lexerResult.CISES.Find(cise => cise.Name == curToken.Value)
                 };
             }
-            else 
+            else
             {
                 dataType = PrimitiveDataType.GetPrimitiveType(curToken);
             }
@@ -480,14 +473,14 @@ namespace miniJ.Parsing
             NextToken();
             bool Array = false;
 
-            if (Expected_Token(UnionTokenTypes(TokenType.NotDef_Identifier, TokenType.Delimiter_OIndex, TokenType.Delimiter_OParenthesis)))
+            if (Expected_Token(UnionTokenTypes(TokenType.NotDef_Identifier, TokenType.Delimiter_OIndex, TokenType.Delimiter_OParenthesis), ErrorLocation.DataType, calledFromNode))
             {
                 if (curToken.TokenType == TokenType.Delimiter_OIndex)
                 {
                     Array = true;
                     NextToken();
 
-                    if (Expected_Token(TokenType.Delimiter_CIndex, TokenType.NotDef_Identifier))
+                    if (Expected_Token(TokenType.Delimiter_CIndex, ErrorLocation.DataType, calledFromNode))
                     {
                         NextToken();
                     }
@@ -505,19 +498,19 @@ namespace miniJ.Parsing
             return dataType;
         }
 
-        private void ParseMethod(string name, DataType type, CISE cise, bool Virtual)
+        private Method ParseMethod(string name, DataType type, CISE cise, bool Virtual)
         {
-            AbstractMethod method = new AbstractMethod(name, type, GetAccessModifier(SpecificAccessModifier.PRIVATE));
+            Method method = new Method(name, type, GetAccessModifier(SpecificAccessModifier.PRIVATE));
 
             method.CISE = cise;
-            method.Parameters = ParseMethodParametrsDclr();
+            method.Parameters = ParseMethodParametrsDclr(method);
             method.Virtual = Virtual;
-
-            if(name == ParserUtils.CONSTRUCTOR_NAME)
+          
+            if (name == ParserUtils.CONSTRUCTOR_NAME)
             {
                 if (Virtual)
                 {
-                    Error(CodeError.INVALID_MEMBER_MODIFIER, type.Origin);
+                    Error(ErrorMessages.INVALID_MEMBER_MODIFIER, type.Origin, ErrorLocation.MethodDclr, method);
                 }
                 cise.Constructor = method;
             }
@@ -525,7 +518,7 @@ namespace miniJ.Parsing
             if (cise.TypeOfCISE != CISE.SpecificTypeOfCISE.Interface)
             {
 
-                Expected_Token(TokenType.Delimiter_OBlock);
+                Expected_Token(TokenType.Delimiter_OBlock, ErrorLocation.MethodDclr, method);
                 NextToken();
 
                 uint openBlocks = 1;
@@ -546,36 +539,24 @@ namespace miniJ.Parsing
             }
             else
             {
-                Expected_Token(TokenType.Delimiter_CInstruction);
+                //Error("Interface methods cannot have a body assigned.", curToken, ErrorLocation.MethodDclr, method, false);
+                Expected_Token(TokenType.Delimiter_CInstruction, ErrorLocation.MethodDclr, method);
                 NextToken();
             }
 
             Log(method.ToString(), LogInfo.Created);
-
+            return method;
         }
 
-        private List<Variable> ParseVariableDeclaration(List<Token> Names, DataType dataType,bool insideMethod)
+        private List<Variable> ParseVariableDeclaration(List<Token> Names, DataType dataType, SyntaxNode calledFromNode)
         {
             List<Variable> dclrVariables = new List<Variable>();
 
             for (int nameIndex = 0; nameIndex < Names.Count; nameIndex++)
             {
-                Variable variable;
-                if (!insideMethod) // Se estiver fora de um método, consiste em um Field
-                {
-                    variable = new Field(Names[nameIndex])
-                    {
-                        AccessModifier = GetAccessModifier(SpecificAccessModifier.PRIVATE)
-                    };
-                }
-                else // Caso contrário, uma variável normal
-                {
-                    variable = new Variable(Names[nameIndex]);
-                }
-
+                Variable variable = new Variable(Names[nameIndex]);
                 variable.Type = dataType;
                 variable.Name = Names[nameIndex].Value;
-
                 dclrVariables.Add(variable);
             }
 
@@ -592,10 +573,11 @@ namespace miniJ.Parsing
             {
                 if (dataType.Settings.Constant) // Uma constante necessita ser assinalada ao ser declarada
                 {
-                    Error("A constant needs to be flagged when it is declared.", curToken);
+                    Error("A constant needs to be flagged when it is declared.", curToken
+                          , ErrorLocation.VariableBody, calledFromNode);
                 }
 
-                Expected_Token(TokenType.Delimiter_CInstruction);
+                Expected_Token(TokenType.Delimiter_CInstruction, ErrorLocation.VariableDclr, calledFromNode);
                 NextToken();
             }
 
@@ -603,10 +585,11 @@ namespace miniJ.Parsing
             {
                 Log(variable.ToString(), LogInfo.Created);
             }
+
             return dclrVariables;
         }
 
-        private List<ParameterDeclaration> ParseMethodParametrsDclr(AbstractMethod curMethod = null)
+        private List<ParameterDeclaration> ParseMethodParametrsDclr(SyntaxNode calledFromNode)
         {
             NextToken(); // (
 
@@ -620,7 +603,7 @@ namespace miniJ.Parsing
 
             while (curToken.TokenType != TokenType.Delimiter_CParenthesis)
             {
-                parameters.Add(ParseParameterDeclaration());
+                parameters.Add(ParseParameterDeclaration(calledFromNode));
             }
 
             NextToken();
@@ -628,11 +611,11 @@ namespace miniJ.Parsing
             return parameters;
         }
 
-        private ParameterDeclaration ParseParameterDeclaration()
+        private ParameterDeclaration ParseParameterDeclaration(SyntaxNode calledFromNode)
         {
-            if (!Expected_Token(UnionTokenTypes(TokenType.NotDef_TypeIdentifier, ParserUtils.AllBuiltInTokens), TokenType.Delimiter_Comma, TokenType.Delimiter_CParenthesis))
+            if (!Expected_Token(UnionTokenTypes(TokenType.NotDef_TypeIdentifier, ParserUtils.AllBuiltInTokens), ErrorLocation.ParameterDclr, calledFromNode))
             {
-                if(curToken.TokenType== TokenType.Delimiter_Comma)
+                if (curToken.TokenType == TokenType.Delimiter_Comma)
                 {
                     NextToken();
                 }
@@ -642,24 +625,24 @@ namespace miniJ.Parsing
 
             Token error = curToken;
             bool Virtual = false;
-            DataType dataType = ParseDataType(out Virtual);
-
-            if (Virtual)
-            {
-                Error(CodeError.INVALID_MEMBER_MODIFIER, error);
-                return null; 
-            }
+            DataType dataType = ParseDataType(out Virtual, calledFromNode);
 
             ParameterDeclaration parameter = new ParameterDeclaration(dataType.Origin);
             parameter.Type = dataType;
             parameter.Name = curToken.Value;
+
+            if (Virtual)
+            {
+                Error(ErrorMessages.INVALID_MEMBER_MODIFIER, error, ErrorLocation.ParameterDclr, parameter);
+                return null;
+            }
 
             NextToken();
 
             switch (curToken.TokenType)
             {
                 case TokenType.Operator_Equal:
-                    parameter.Value = ParseAsssignExpr();
+                    parameter.Value = ParseAsssignExpr(parameter);
                     break;
                 case TokenType.Delimiter_Comma:
                     NextToken();
@@ -671,12 +654,12 @@ namespace miniJ.Parsing
             }
 
             Log(parameter.ToString(), LogInfo.Created);
-            return parameter; ;
+            return parameter;
         }
 
-        private Expression ParseAsssignExpr()
+        private Expression ParseAsssignExpr(SyntaxNode calledFromNode)
         {
-            Expected_Token(TokenType.Operator_Equal);
+            Expected_Token(TokenType.Operator_Equal, ErrorLocation.AssignExpr, calledFromNode);
             NextToken(); // =
             throw new NotImplementedException();
         }
@@ -687,7 +670,7 @@ namespace miniJ.Parsing
         /// </summary>
         /// <param name="defaultAccessModifier">Modificador de acesso padrão caso não o tenha</param>
         /// <returns>Modificador de acesso</returns>
-        public AccessModifierNode GetAccessModifier(SpecificAccessModifier defaultAccessModifier)
+        private AccessModifierNode GetAccessModifier(SpecificAccessModifier defaultAccessModifier)
         {
             if (_accessModifier != null)
             {
@@ -723,8 +706,8 @@ namespace miniJ.Parsing
             List<Token> result = new List<Token>();
             while (curToken.TokenType != delimiter)
             {
-                if (curToken.TokenType == TokenType.NotDef_Identifier) 
-                { 
+                if (curToken.TokenType == TokenType.NotDef_Identifier)
+                {
                     result.Add(curToken);
                     NextToken();
                 }
@@ -748,7 +731,7 @@ namespace miniJ.Parsing
         /// até que algum dos especificados neste parâmetro seja encontrado, isso a chave para que possa-se 
         /// continuar o processamento do código para se encontrar o máximo de erros numa só verificação.</param>
         /// <returns>Satisfez a condição, encontrou o token esperado?</returns>
-        private bool Expected_Token(TokenType[] expectedTokens, params TokenType[] skipUntil)
+        private bool Expected_Token(TokenType[] expectedTokens, ErrorLocation errorLocation, SyntaxNode calledFromNode, bool panicError = false)
         {
             bool result = false;
 
@@ -763,20 +746,20 @@ namespace miniJ.Parsing
 
             if (!result)
             {
-                Error("Expected " + ParserUtils.GetExpectedTokenListAsString(expectedTokens), curToken, skipUntil);
+                Error("Expected " + ParserUtils.GetExpectedTokenListAsString(expectedTokens), curToken
+                      ,errorLocation, calledFromNode, panicError);
+                if (!panicError)
+                {
+                    NextToken();
+                }
             }
 
             return result;
         }
 
-        private bool Expected_Token(TokenType expectedToken, params TokenType[] skipUntil)
+        private bool Expected_Token(TokenType expectedToken, ErrorLocation errorLocation, SyntaxNode calledFromNode, bool panicError = false)
         {
-            return Expected_Token(new TokenType[] { expectedToken }, skipUntil);
-        }
-
-        private TokenType[] ToArray(params TokenType[] tokenTypes)
-        {
-           return tokenTypes.ToArray();
+            return Expected_Token(new TokenType[] { expectedToken }, errorLocation, calledFromNode, panicError);
         }
 
         private void Debug(bool readKey = true, string text = "")
@@ -815,43 +798,64 @@ namespace miniJ.Parsing
             }
 
             msg += message;
-            Helpers.Global.Logger.Log(msg, this);
+            Logger.Log(msg, this);
         }
 
-        private void Error(string message, Token errorToken, params TokenType[] skipUntil)
+        private void Error(string message, Token errorToken, ErrorLocation errorLocation, SyntaxNode node = null, bool panicError = false)
         {
-            message += " At: " + errorToken.ToString();
-            Log(message, LogInfo.Error);
+            Log(message + " At: " + errorToken.ToString(), LogInfo.Error);
 
-            CodeError codeError = new CodeError(errorToken, this, message);
-            detectedErrors.Add(codeError);
+            ParserError codeError = new ParserError(this, errorToken, message);
+            _compilationUnit.Errors.Add(codeError);
+            ProcessError(errorToken, errorLocation, node, panicError);
+        }
 
-            if (skipUntil.Length > 0)
+        private void ProcessError(Token errorToken, ErrorLocation errorLocation, SyntaxNode node = null, bool panicError = false)
+        {
+            switch (errorLocation)
             {
-                while (!AnyToken(curToken, skipUntil)) // Desta forma, fazemos com que seja possível descobrir o máximo de erros numa única verificação
-                {
-                    NextToken();
-                }
+                case ErrorLocation.CISEsBody:
+                    {
+                      /*  while(curToken.Value != Grammar.Delimiters.OBlock.Value)
+                        {
+                            NextToken();
+                        }*/
+                        break;
+                    }
+                case ErrorLocation.CISEsDclr:
+                    break;
+                case ErrorLocation.Expected_Token:
+                    break;
+                case ErrorLocation.MethodBody:
+                    break;
+                case ErrorLocation.MethodDclr:
+                    break;
+                case ErrorLocation.NamespaceBody:
+                    break;
+                case ErrorLocation.NamespaceDclr:
+                    break;
+                case ErrorLocation.None:
+                    break;
             }
         }
 
-        private bool AnyToken(Token token , TokenType[] expected)
+        private bool AnyToken(Token token, TokenType[] expected)
         {
-            for(int i = 0; i < expected.Length; i++)
+            for (int i = 0; i < expected.Length; i++)
             {
-                if(token.TokenType == expected[i])
+                if (token.TokenType == expected[i])
                 {
                     return true;
                 }
             }
             return false;
         }
-
+        /*
         private void SkipUntilEvenClosingBracket(params TokenType[] expected)
         {
             int openedByNow = 1;
 
-            while(openedByNow != 0)
+            while (openedByNow != 0)
             {
                 if (AnyToken(curToken, expected))
                 {
@@ -872,13 +876,13 @@ namespace miniJ.Parsing
                 Debug(true, "tchan invocadaun");
             }
         }
-
+        */
         private TokenType[] UnionTokenTypes(params object[] Params)
         {
             List<TokenType> allToken = new List<TokenType>();
             for (int i = 0; i < Params.Length; i++)
             {
-                if(Params[i].GetType() == typeof(TokenType[]))
+                if (Params[i].GetType() == typeof(TokenType[]))
                 {
                     allToken.AddRange((TokenType[])Params[i]);
                 }
@@ -906,10 +910,18 @@ namespace miniJ.Parsing
         public enum ErrorLocation
         {
             None,
+            AccessModifier,
+            AssignExpr,
+            CISEsDclr,
+            CISEsBody,
+            DataType,
             MethodDclr,
             MethodBody,
             NamespaceDclr,
             NamespaceBody,
+            ParameterDclr,
+            VariableDclr,
+            VariableBody,
             Expected_Token
         }
 

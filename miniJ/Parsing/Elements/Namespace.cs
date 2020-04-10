@@ -6,7 +6,7 @@ using System.Text;
 
 namespace miniJ.Elements
 {
-    class Namespace : ISyntaxNode
+    public class Namespace : SyntaxNode
     {
         public readonly Namespace Parent;
 

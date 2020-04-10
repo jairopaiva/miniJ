@@ -1,4 +1,5 @@
-﻿using miniJ.Lexical.Elements.Token;
+﻿using miniJ.Elements.Base;
+using miniJ.Lexical.Elements.Token;
 using System.Collections.Generic;
 
 namespace miniJ.Parsing.Elements

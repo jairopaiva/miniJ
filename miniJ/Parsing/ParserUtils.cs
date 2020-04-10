@@ -1,4 +1,5 @@
-﻿using miniJ.Grammar;
+﻿using miniJ.Elements.Base;
+using miniJ.Elements.Base.CompilationElements;
 using miniJ.Lexical;
 using miniJ.Lexical.Elements.Token;
 using miniJ.Parsing.Elements;
@@ -52,13 +53,13 @@ namespace miniJ.Parsing
                 else
                 {
                     builder.Append(tokens[i].Value);
-                    builder.Append(Delimiters.Dot.Value);
+                    builder.Append(Grammar.Delimiters.Dot.Value);
                 }
             }
             return builder.ToString();
         }
 
-        public static bool IsType(Token token, List<CISE> cises)
+        public static bool IsType(Token token, List<LexerResult.CISEDetectedInLexer> cises)
         {
             switch (token.TokenType)
             {
@@ -77,13 +78,13 @@ namespace miniJ.Parsing
                 case TokenType.Keyword_Auto:
                     return true;
                 default:
-                    if (cises.Exists(cise => cise.Name == token.Value))
+                    if (cises.Exists(cise => cise.Name.Value == token.Value))
                         return true;
                     return false;
             }
         }   
 
-        public static bool IsTypeOrModifierRelatedToType(Token token, List<CISE> cises)
+        public static bool IsTypeOrModifierRelatedToType(Token token, CompilationUnit compilationUnit)
         {
             switch (token.TokenType)
             {
@@ -94,7 +95,7 @@ namespace miniJ.Parsing
                 case TokenType.Keyword_Static:
                     return true;
                 default:
-                    return IsType(token,cises);
+                    return IsType(token, compilationUnit.LexerResult.CISES);
             }
         }
 
@@ -134,23 +135,23 @@ namespace miniJ.Parsing
             StringBuilder builder = new StringBuilder();
             if (constant)
             {
-                builder.Append("[" +Keywords.Constant.Value + "] ");
+                builder.Append("[" + Grammar.Keywords.Constant.Value + "] ");
             }
             if (readOnly)
             {
-                builder.Append("[" + Keywords.Readonly.Value + "] ");
+                builder.Append("[" + Grammar.Keywords.Readonly.Value + "] ");
             }
             if (Volatile)
             {
-                builder.Append("[" + Keywords.Volatile.Value + "] ");
+                builder.Append("[" + Grammar.Keywords.Volatile.Value + "] ");
             }
             if (Static)
             {
-                builder.Append("[" + Keywords.Static.Value + "] ");
+                builder.Append("[" + Grammar.Keywords.Static.Value + "] ");
             }
             if (Virtual)
             {
-                builder.Append("[" + Keywords.Virtual.Value + "] ");
+                builder.Append("[" + Grammar.Keywords.Virtual.Value + "] ");
             }
 
             return builder.ToString();

@@ -2,21 +2,20 @@
 using miniJ.Elements;
 using miniJ.Elements.Base;
 using miniJ.Lexical.Elements.Token;
-using System;
+using miniJ.Parsing.Elements.Symbols;
 using System.Collections.Generic;
 
 namespace miniJ.Parsing.Elements
 {
-    class CISE : ISyntaxNode
+    public class CISE : SyntaxNode
     {
-
-        
         /// <summary>
         /// Escopo de acesso para este CISE
         /// </summary>
         public AccessModifierNode AccessModifier;
         public SpecificTypeOfCISE TypeOfCISE;
-        public AbstractMethod Constructor;
+        public List<Method> Methods;
+        public Method Constructor;
         /// <summary>
         /// CISES que foram declarados dentro deste
         /// </summary>
@@ -24,7 +23,8 @@ namespace miniJ.Parsing.Elements
         /// <summary>
         /// Namespace em que este CISE está declarado
         /// </summary>
-        public Namespace Namespace;
+        public Namespace Namespace;        
+        public List<Field> Fields;
         public string Name;
         /// <summary>
         /// Quando diferente de null, quer dizer que este CISE foi declarado dentro de outro
@@ -35,7 +35,9 @@ namespace miniJ.Parsing.Elements
         {
             Name = name.Value;
             TypeOfCISE = type;
+            Fields = new List<Field>();
             Children = new List<CISE>();
+            Methods = new List<Method>();
         }
 
         public enum SpecificTypeOfCISE

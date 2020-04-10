@@ -1,6 +1,6 @@
 ﻿namespace miniJ.Elements.Base
 {
-     interface ICompilerNode
+    public interface ICompilerNode
     {
     }
 }

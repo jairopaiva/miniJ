@@ -28,9 +28,9 @@ namespace miniJ.Helpers
             logTable.Add(node, new StringBuilder());
         }
 
-        public void Log(string message, ICompilerNode node)
+        public static void Log(string message, ICompilerNode node)
         {
-            logTable[node].AppendLine(message);
+        //    logTable[node].AppendLine(message);
             Console.WriteLine(message);
         }
 

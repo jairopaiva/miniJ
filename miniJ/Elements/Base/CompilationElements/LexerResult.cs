@@ -1,29 +1,16 @@
 ﻿using miniJ.Lexical.Elements.Token;
-using miniJ.Parsing.Elements;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
-namespace miniJ.Elements.Base
+namespace miniJ.Elements.Base.CompilationElements
 {
-    class CompilationElements
-    {
-        public LexerResult LexerResult;
-
-        public CompilationElements()
-        {
-            LexerResult = new LexerResult();
-        }
-    }
-
-    class LexerResult
+    public class LexerResult
     {
         public List<Token> Tokens;
-        public List<CISE> CISES;
+        public List<CISEDetectedInLexer> CISES;
         public LexerResult()
         {
             Tokens = new List<Token>();
-            CISES = new List<CISE>();
+            CISES = new List<CISEDetectedInLexer>();
         }
 
         /// <summary>
@@ -35,7 +22,7 @@ namespace miniJ.Elements.Base
             HashSet<string> cisesNames = new HashSet<string>();
             for (int i = 0; i < CISES.Count; i++)
             {
-                cisesNames.Add(CISES[i].Name);
+                cisesNames.Add(CISES[i].Name.Value);
             }
 
             for (int i = 0; i < Tokens.Count; i++)
@@ -45,6 +32,17 @@ namespace miniJ.Elements.Base
                 {
                     Tokens[i].TokenType = TokenType.NotDef_TypeIdentifier;
                 }
+            }
+        }
+
+        public struct CISEDetectedInLexer
+        {
+            public Token Origin;
+            public Token Name;
+            public CISEDetectedInLexer(Token origin, Token name)
+            {
+                Origin = origin;
+                Name = name;
             }
         }
     }

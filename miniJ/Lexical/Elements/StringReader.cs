@@ -2,13 +2,14 @@
 {
     class StringReader
     {
+        public readonly string Filename;
         private readonly string Source;
-
         private int tempPos = 0;
 
-        public StringReader(string s)
+        public StringReader(string fileName)
         {
-            Source = s;
+            Source = System.IO.File.ReadAllText(fileName);
+            Filename = fileName;
             Line = 1;
             Column = 1;
         }

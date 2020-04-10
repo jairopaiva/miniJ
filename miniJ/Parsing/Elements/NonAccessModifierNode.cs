@@ -1,10 +1,9 @@
 ﻿using miniJ.Elements.Base;
-using miniJ.Grammar;
 using miniJ.Lexical.Elements.Token;
 
 namespace miniJ.Parsing.Elements
 {
-    class NonAccessModifierNode : ISyntaxNode
+    public class NonAccessModifierNode : SyntaxNode
     {
         public SpecificNonAccessModifier SpecificNonAccessModifier;
         private NonAccessModifierNode(Token origin, SpecificNonAccessModifier specificAccessModifier) : base(origin)

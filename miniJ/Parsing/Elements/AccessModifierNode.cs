@@ -3,7 +3,7 @@ using miniJ.Lexical.Elements.Token;
 
 namespace miniJ.Parsing.Elements
 {
-    class AccessModifierNode : ISyntaxNode
+    public class AccessModifierNode : SyntaxNode
     {
         public SpecificAccessModifier SpecificAccessModifier;
         private AccessModifierNode(Token origin, SpecificAccessModifier specificAccessModifier) : base(origin)

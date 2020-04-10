@@ -1,4 +1,4 @@
-﻿using miniJ.Grammar;
+﻿using miniJ.Elements.Base;
 using miniJ.Helpers;
 using miniJ.Lexical.Elements.Token;
 using System.Linq;
@@ -14,7 +14,7 @@ namespace miniJ.Lexical
 
         public static string GetTokenValueByType(TokenType tokenType)
         {
-            Token token = Global.tokenDatabase.FirstOrDefault(token => token.Value.TokenType == tokenType).Value;
+            Token token = Grammar.tokenDatabase.FirstOrDefault(token => token.Value.TokenType == tokenType).Value;
             if (token != null)
             {
                 if (token.Value != null)
@@ -42,16 +42,16 @@ namespace miniJ.Lexical
 
         public static bool IsOperatorOrComparator(string curChar)
         {
-            if (Global.tokenDatabase.ContainsKey(curChar))
-                return Global.tokenDatabase[curChar].TokenType.ToString().StartsWith("Operator") ||
-                        Global.tokenDatabase[curChar].TokenType.ToString().StartsWith("Comparator");
+            if (Grammar.tokenDatabase.ContainsKey(curChar))
+                return Grammar.tokenDatabase[curChar].TokenType.ToString().StartsWith("Operator") ||
+                        Grammar.tokenDatabase[curChar].TokenType.ToString().StartsWith("Comparator");
             return false;
         }
 
         public static bool OnlyNumber(string value)
         {
             int i = 0;
-            if (value[i] == Operators.Add.Value[0] || value[i] == Operators.Sub.Value[0])
+            if (value[i] == Grammar.Operators.Add.Value[0] || value[i] == Grammar.Operators.Sub.Value[0])
                 i++;
 
             for (; i < value.Length; i++)

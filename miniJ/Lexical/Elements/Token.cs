@@ -1,34 +1,16 @@
 ﻿namespace miniJ.Lexical.Elements.Token
 {
-    class Token
+    public class Token
     {
-        public Token(string value)
+        public Token(string value, TokenType tokenType = TokenType.NotDef_None)
         {
             Value = value;
-            TokenType = TokenType.NotDef_None;
+            TokenType = tokenType;
         }
 
         public NodeLocation Location;
         public TokenType TokenType;
-        public string Value;
-
-        public Token Copy(NodeLocation location)
-        {
-            Token clone = new Token(this.Value) { TokenType = this.TokenType, Location = location };
-            return clone;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj.GetType() == typeof(Token))
-                return (obj as Token).Value == this.Value;
-            return obj.ToString() == this.Value;
-        }
-
-        public override int GetHashCode()
-        {
-            return this.Value.GetHashCode() ^ this.TokenType.GetHashCode();
-        }
+        public readonly string Value;
 
         public string ToString(bool location = false)
         {

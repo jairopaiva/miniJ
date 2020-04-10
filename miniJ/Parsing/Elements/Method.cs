@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace miniJ.Parsing.Elements
 {
-    class AbstractMethod : ISyntaxNode
+    public class Method : SyntaxNode
     {
         public List<ParameterDeclaration> Parameters;
         public AccessModifierNode AccessModifier;
@@ -12,8 +12,9 @@ namespace miniJ.Parsing.Elements
         public bool Virtual;
         public string Name;
         public CISE CISE;
+        public Body Body;
         
-        public AbstractMethod(string name, DataType returnType, AccessModifierNode accessModifier) : base(returnType.Origin)
+        public Method(string name, DataType returnType, AccessModifierNode accessModifier) : base(returnType.Origin)
         {
             Name = name;
             ReturnType = returnType;

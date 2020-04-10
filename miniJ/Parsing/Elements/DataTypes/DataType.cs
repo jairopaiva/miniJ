@@ -1,10 +1,10 @@
-﻿using miniJ.Elements.Base;
-using miniJ.Lexical.Elements.Token;
+﻿using miniJ.Lexical.Elements.Token;
+using miniJ.Elements.Base;
 using System.Text;
 
 namespace miniJ.Parsing.Elements.DataTypes
 {
-    class DataType : ISyntaxNode
+    public class DataType : SyntaxNode
     {
         public string Name;
         public DataTypeConfiguration Settings;

@@ -1,5 +1,4 @@
 ﻿using miniJ.Lexical.Elements.Token;
-using miniJ.Parsing.Elements;
 
 namespace miniJ.Parsing.Elements.DataTypes
 {
